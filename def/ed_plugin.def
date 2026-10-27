@@ -1,0 +1,6 @@
+LIBRARY ed_plugin
+EXPORTS
+    ed_ordinal1 @1 NONAME
+    ed_ordinal2 @2 NONAME
+    ed_ordinal3 @3 NONAME
+    ed_ordinal4 @4 NONAME

@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>PeddleCheap wire protocol</title><style>
+:root{--fg:#111827;--muted:#6b7280;--bd:#e5e7eb}
+@media(prefers-color-scheme:dark){:root{--fg:#e5e7eb;--muted:#9ca3af;--bd:#374151}}
+body{font:14px/1.6 system-ui,sans-serif;color:var(--fg);max-width:760px;margin:32px auto;padding:0 16px}
+h1{font-size:22px;font-weight:500}h2{font-size:16px;font-weight:500;margin-top:24px}
+.m{font-family:ui-monospace,Menlo,monospace;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:6px 0;border-bottom:1px solid var(--bd);text-align:left;vertical-align:top}
+th{color:var(--muted);font-weight:500}.sub{color:var(--muted);font-size:12px}
+</style></head><body>
+<h1>PeddleCheap wire protocol - verified reference</h1>
+<p class="sub">From dp_decrypt.py read offsets, the LP XML log, and Pc_Listen_Command.xml.</p>
+<h2>Frame layouts</h2>
+<p class="sub">Implant to LP: 8-byte header. LP to implant: 16-byte header with seq at +4 LE.
+Later sub-messages reuse the implant-side header.</p>
+<table><tr><th>off</th><th>implant to LP</th><th>LP to implant</th></tr>
+<tr><td class="m">+0</td><td class="m">clear_text_length u32 BE</td><td class="m">reserved u32</td></tr>
+<tr><td class="m">+4</td><td class="m">length2 u8</td><td class="m">seq u32 LE</td></tr>
+<tr><td class="m">+5</td><td class="m">symm_encr_used u8</td><td class="m">-</td></tr>
+<tr><td class="m">+8</td><td class="m">ciphertext</td><td class="m">clear_text_length u32 BE</td></tr>
+<tr><td class="m">+16</td><td class="m">-</td><td class="m">ciphertext</td></tr></table>
+<h2>Handshake</h2>
+<p class="sub">contact, RSA magic, RSA session key, OS check, command poll, PayloadInfo + blob, export, executable.</p>
+<h2>Crypto</h2>
+<p class="sub">RSA-2048 e=65537 unpadded; AES-128-CBC, IV_next = last ciphertext block.</p>
+<h2>File/Library blob</h2>
+<p class="sub">+24 sendSize confirmed, +28 checksum confirmed, +32 flags confirmed; +16/+30 candidates; +20 open.</p>
+</body></html>

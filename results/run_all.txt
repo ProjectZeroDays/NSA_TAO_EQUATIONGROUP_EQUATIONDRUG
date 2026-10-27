@@ -1,0 +1,9 @@
+capture                               transport    port  frames  directions            status
+------------------------------------------------------------------------------------------------
+forward_level3_tcp_port_1163.pcap     tcp          1163       0  -                     EMPTY
+forward_level4_tcp_port_1167.pcap     tcp          1167       0  -                     EMPTY
+reverse_level3_http_port_80.pcap      http           80       0  -                     EMPTY
+reverse_level3_http_port_443.pcap     http          443       0  -                     EMPTY
+reverse_level3_tcp_port_53.pcap       tcp            53       0  -                     EMPTY
+
+FAIL: 5/5 unusable: ['forward_level3_tcp_port_1163.pcap', 'forward_level4_tcp_port_1167.pcap', 'reverse_level3_http_port_80.pcap', 'reverse_level3_http_port_443.pcap', 'reverse_level3_tcp_port_53.pcap']

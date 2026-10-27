@@ -1,0 +1,12 @@
+3 records from caps/00041-pc_listen_2017_10_16_09h37m12s.966.xml
+
+Command      lptimestamp=2017-10-16T09:37:12 name=pc_listen
+PayloadInfo  checksum=5d20 fileName=C:\johnb\fuzzbunch-master-new\Resources\Pc\/../Dsz/Payloads/Files/x64-winnt-vc9s/release/Dsz_Implant_Pc.dll lptimestamp=2017-10-16T09:41:13 origSize=338944 sendSize=166644 sendingPayload=true
+RunLibrary   export=#1 flags=0x00000008 lptimestamp=2017-10-16T09:41:13 name= path=
+
+ground-truth values for verify.py:
+  checksum=5d20
+  export=#1
+  flags=0x00000008
+  origSize=338944
+  sendSize=166644

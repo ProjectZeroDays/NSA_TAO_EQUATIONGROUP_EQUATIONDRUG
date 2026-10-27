@@ -1,0 +1,5 @@
+LIBRARY mscfg32
+EXPORTS
+    EdConfigFromShare2 @1
+    EdPluginHostEnumerate @2
+    EdConfigLoad @3
