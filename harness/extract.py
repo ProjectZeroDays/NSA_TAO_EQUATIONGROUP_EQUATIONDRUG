@@ -17,6 +17,8 @@ except ImportError:
 
 HDR_IMPLANT, HDR_LP, BLOCK = 8, 16, 16
 MAX_CLEAR = 0x100000
+MAX_PAD = 32
+RESYNC_CAP = 1 << 18
 
 
 class Frame:
@@ -62,6 +64,19 @@ def tcp_streams(pcap):
     return {k: _concat(v) for k, v in g.items()}
 
 
+HTTP_ANCHORS = (b"POST / HTTP/1.", b"GET / HTTP/1.")
+
+
+def find_http_start(buf):
+    """Streams begin mid-conversation or carry SMB noise; anchor on a request line."""
+    best = -1
+    for m in HTTP_ANCHORS:
+        i = buf.find(m)
+        if i >= 0 and (best < 0 or i < best):
+            best = i
+    return best
+
+
 def http_body(buf):
     i = buf.find(b"\r\n\r\n")
     if i < 0:
@@ -84,13 +99,15 @@ def classify(buf):
 def parse_frames(buf, direction, transport, first16=True):
     """Field offsets follow the header actually in use: 16-byte LP header has
     seq@+4 clear@+8 len2@+12 encr@+13; 8-byte header has clear@+0 len2@+4 encr@+5.
-    Only the first frame of an LP->implant body carries the 16-byte header."""
-    frames, off, resync, first = [], 0, 0, True
-    while True:
-        if direction == "implant->lp":
-            hlen = HDR_IMPLANT
-        else:
-            hlen = HDR_LP if (first16 and first) else HDR_IMPLANT
+    Only the first frame of an LP->implant body carries the 16-byte header.
+
+    A candidate that overruns the buffer resyncs one byte forward rather than
+    aborting, so a stream with a non-frame prefix (SMB, TLS, mid-body start)
+    still yields frames further in.
+    """
+    frames, off, first, run = [], 0, True, 0
+    while off + HDR_IMPLANT <= len(buf):
+        hlen = HDR_LP if (direction != "implant->lp" and first16 and first) else HDR_IMPLANT
         if off + hlen > len(buf):
             break
         if hlen == HDR_LP:
@@ -101,43 +118,58 @@ def parse_frames(buf, direction, transport, first16=True):
             clear = struct.unpack_from(">I", buf, off)[0]
             length2, encr, seq = buf[off + 4], buf[off + 5], None
         plen = clear + length2
-        if clear > MAX_CLEAR or plen == 0:
-            off += 1
-            resync += 1
-            continue
         end = off + hlen + plen
-        if end > len(buf):
-            break
-        frames.append(Frame(transport=transport, direction=direction, seq=seq,
-                            clear_len=clear, length2=length2, encr=encr,
-                            ciphertext=buf[off + hlen:end]))
-        off = end
-        first = False
-    return frames, resync
+        ok = (plen > 0 and plen <= MAX_CLEAR and end <= len(buf)
+              and length2 <= MAX_PAD and (encr in (0, 1)))
+        if ok:
+            frames.append(Frame(transport=transport, direction=direction, seq=seq,
+                                clear_len=clear, length2=length2, encr=encr,
+                                ciphertext=buf[off + hlen:end]))
+            off = end
+            first = False
+            run = 0
+        else:
+            off += 1
+            run += 1
+            if run > RESYNC_CAP:
+                break
+    return frames, run
 
 
 def pick_direction(buf, transport):
-    best, best_frames, best_score = None, [], -1
+    """Score on frame count first, resync count second; require at least one frame."""
+    best, best_frames, best_score = None, [], None
     for d in ("implant->lp", "lp->implant"):
         for f16 in (True, False):
             fr, rs = parse_frames(buf, d, transport, f16)
-            if len(fr) - rs > best_score:
-                best, best_frames, best_score = d, fr, len(fr) - rs
-    return best, best_frames
-
-
-def extract(pcap):
-    records = []
-    for buf in tcp_streams(pcap).values():
-        direction, transport = classify(buf)
-        if transport == "http":
-            body = http_body(buf)
-            if not body:
+            if not fr:
                 continue
-            frames, _ = parse_frames(body, direction, "http")
-        else:
-            _, frames = pick_direction(buf, "tcp")
-        records.extend(frames)
+            score = len(fr) * 1024 - rs
+            if best_score is None or score > best_score:
+                best, best_frames, best_score = d, fr, score
+    return best, best_frames, best_score
+
+
+def extract_stream(buf):
+    a = find_http_start(buf)
+    if a >= 0:
+        buf = buf[a:]
+        direction, _ = classify(buf)
+        body = http_body(buf)
+        if not body:
+            return []
+        frames, _ = parse_frames(body, direction, "http")
+        return frames
+    _, frames, _ = pick_direction(buf, "tcp")
+    return frames
+
+
+def extract(pcap, ports=None):
+    records = []
+    for key, buf in tcp_streams(pcap).items():
+        if ports and key[1] not in ports and key[3] not in ports:
+            continue
+        records.extend(extract_stream(buf))
     return records
 
 
@@ -151,7 +183,15 @@ def selftest():
     two = hdr2 + b"\xBB" * 16 + struct.pack(">I", 8) + bytes([8, 0, 0, 0]) + b"\xCC" * 16
     fr3, _ = parse_frames(two, "lp->implant", "tcp")
     assert len(fr3) == 2 and fr3[1].encr == 0 and fr3[1].clear_len == 8
-    print("selftest: OK (3 frame shapes, mixed headers, 24-byte invariant held)")
+    # regression: 4096 bytes of SMB noise then a valid frame must still parse
+    noise = bytes((i * 7 + 3) & 0xFF for i in range(4096))
+    fr4, rs4 = parse_frames(noise + hdr + b"\xAA" * 16, "implant->lp", "tcp")
+    assert len(fr4) >= 1 and fr4[-1].clear_len == 4, (len(fr4), rs4)
+    # regression: garbage with an overrunning length must not abort the scan
+    bad = b"\x00\x0f\xff\xff" + bytes([0, 1, 0, 0])
+    fr5, _ = parse_frames(bad + hdr + b"\xAA" * 16, "implant->lp", "tcp")
+    assert len(fr5) == 1 and fr5[0].clear_len == 4
+    print("selftest: OK (5 frame shapes, resync after noise and overrun)")
 
 
 def main():
@@ -160,13 +200,14 @@ def main():
     ap.add_argument("--json", action="store_true")
     ap.add_argument("--selftest", action="store_true")
     ap.add_argument("--probe", action="store_true")
+    ap.add_argument("--port", type=int, action="append", default=[])
     a = ap.parse_args()
     if a.selftest:
         return selftest()
     if a.probe:
         pcapread.probe(a.pcap)
         return 0
-    recs = extract(a.pcap)
+    recs = extract(a.pcap, set(a.port) or None)
     if a.json:
         print(json.dumps([r.as_dict() for r in recs], indent=2))
     else:

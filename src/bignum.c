@@ -16,62 +16,92 @@ static int bn_bits(const bn *a){
 
 void bn_from_bytes(bn *r, const u8 *be, size_t len)
 {
-    int i; bn_zero(r);
-    for (i = 0; i < (int)len; i++) {
-        int bit = ((int)len - 1 - i) * 8;
-        r->w[bit>>6] |= (u64)be[i] << (bit & 63);
+    size_t i; bn_zero(r);
+    if (len > (size_t)BN_LIMBS * 8) { be += len - (size_t)BN_LIMBS * 8; len = (size_t)BN_LIMBS * 8; }
+    for (i = 0; i < len; i++) {
+        size_t bit = (len - 1 - i) * 8;
+        r->w[bit >> 6] |= (u64)be[i] << (bit & 63);
     }
 }
+
 void bn_to_bytes(u8 *be, size_t len, const bn *a)
 {
-    int i;
-    for (i = 0; i < (int)len; i++) {
-        int bit = ((int)len - 1 - i) * 8;
-        be[i] = (u8)(a->w[bit>>6] >> (bit & 63));
+    size_t i;
+    for (i = 0; i < len; i++) {
+        size_t bit = (len - 1 - i) * 8;
+        be[i] = (bit >> 6) < BN_LIMBS ? (u8)(a->w[bit >> 6] >> (bit & 63)) : 0;
     }
 }
-static void bn_mulmod(bn *r, const bn *a, const bn *b, const bn *m)
+
+static void bn_mulwide(u64 *prod, const bn *a, const bn *b)
 {
-    bn acc, tmp; int i, j;
-    bn_zero(&acc);
+    int i, j;
+    memset(prod, 0, sizeof(u64) * BN_WIDE_LIMBS);
     for (i = 0; i < BN_LIMBS; i++) {
         u64 carry = 0;
         if (!b->w[i]) continue;
-        bn_zero(&tmp);
-        for (j = 0; j + i < BN_LIMBS; j++) {
-            unsigned __int128 p = (unsigned __int128)a->w[j] * b->w[i] + carry + tmp.w[j+i];
-            tmp.w[j+i] = (u64)p;
+        for (j = 0; j < BN_LIMBS; j++) {
+            unsigned __int128 p = (unsigned __int128)a->w[j] * b->w[i] + carry + prod[j + i];
+            prod[j + i] = (u64)p;
             carry = (u64)(p >> 64);
         }
-        { u64 c2 = 0; for (j = 0; j < BN_LIMBS; j++){
-            unsigned __int128 s = (unsigned __int128)acc.w[j] + tmp.w[j] + c2;
-            acc.w[j] = (u64)s; c2 = (u64)(s >> 64); } }
-    }
-    {
-        bn rem, d; int bits = bn_bits(&acc), k;
-        bn_zero(&rem); memcpy(&d, m, sizeof(bn));
-        for (k = bits - 1; k >= 0; k--) {
-            bn_shl1(&rem);
-            rem.w[0] |= (u64)bn_bit(&acc, k);
-            if (bn_cmp(&rem, &d) >= 0) bn_sub(&rem, &rem, &d);
-        }
-        memcpy(r, &rem, sizeof(bn));
+        prod[j + i] += carry;
     }
 }
+
+static void bn_reduce(bn *r, const u64 *wide, const bn *m)
+{
+    bn rem; int k, top = 0;
+    bn_zero(&rem);
+    for (k = BN_WIDE_LIMBS * 64 - 1; k >= 0; k--) {
+        int carry = (int)((rem.w[BN_LIMBS - 1] >> 63) & 1);
+        bn_shl1(&rem);
+        rem.w[0] |= (wide[k >> 6] >> (k & 63)) & 1;
+        if (top || bn_cmp(&rem, m) >= 0) bn_sub(&rem, &rem, m);
+        top = carry;
+    }
+    memcpy(r, &rem, sizeof(bn));
+}
+
+static void bn_mulmod(bn *r, const bn *a, const bn *b, const bn *m)
+{
+    u64 prod[BN_WIDE_LIMBS];
+    bn res;
+    bn_mulwide(prod, a, b);
+    bn_reduce(&res, prod, m);
+    memcpy(r, &res, sizeof(bn));   /* safe when r aliases a or b */
+}
+
+/* reduce an n-limb value through a zero-extended wide buffer */
+static void bn_mod(bn *r, const bn *a, const bn *m)
+{
+    u64 prod[BN_WIDE_LIMBS];
+    bn res;
+    memset(prod, 0, sizeof prod);
+    memcpy(prod, a->w, sizeof(a->w));
+    bn_reduce(&res, prod, m);
+    memcpy(r, &res, sizeof(bn));
+}
+
 int bn_modexp(u8 *out, size_t outlen, const u8 *base, size_t blen,
               const u8 *exp, size_t elen, const u8 *mod, size_t mlen)
 {
+    if (blen > (size_t)BN_LIMBS * 8 || elen > (size_t)BN_LIMBS * 8 ||
+        mlen > (size_t)BN_LIMBS * 8) return EQ_ERR_ARG;
     bn b, e, m, acc; int i, bits;
     bn_from_bytes(&b, base, blen);
     bn_from_bytes(&e, exp, elen);
     bn_from_bytes(&m, mod, mlen);
     if (bn_is_zero(&m)) return EQ_ERR_ARG;
+    if (bn_cmp(&b, &m) >= 0) bn_mod(&b, &b, &m);  /* <--- FIXED */
     bn_zero(&acc); acc.w[0] = 1;
     bits = bn_bits(&e);
+    while (bits > 0 && !((e.w[(bits - 1) >> 6] >> ((bits - 1) & 63)) & 1)) bits--;
     for (i = bits - 1; i >= 0; i--) {
         bn_mulmod(&acc, &acc, &acc, &m);
-        if (bn_bit(&e, i)) bn_mulmod(&acc, &acc, &b, &m);
+        if ((e.w[i >> 6] >> (i & 63)) & 1) bn_mulmod(&acc, &acc, &b, &m);
     }
+
     memset(out, 0, outlen);
     bn_to_bytes(out, outlen, &acc);
     return EQ_OK;

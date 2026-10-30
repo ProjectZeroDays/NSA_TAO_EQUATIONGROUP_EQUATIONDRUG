@@ -10,6 +10,7 @@ CAPTURES = [
     ("reverse_level3_http_port_443.pcap", "http", 443),
     ("reverse_level3_tcp_port_53.pcap", "tcp", 53),
 ]
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 EXTRACT = os.path.join(HERE, "extract.py")
 
@@ -19,8 +20,11 @@ def selftest():
     return r.returncode == 0, (r.stdout + r.stderr).strip()
 
 
-def run_one(path):
-    r = subprocess.run([sys.executable, EXTRACT, path, "--json"], capture_output=True, text=True)
+def run_one(path, port=None):
+    cmd = [sys.executable, EXTRACT, path, "--json"]
+    if port is not None:
+        cmd.extend(["--port", str(port)])
+    r = subprocess.run(cmd, capture_output=True, text=True)
     if r.returncode != 0:
         return None, (r.stderr.strip() or f"exit {r.returncode}")
     try:
@@ -34,6 +38,8 @@ def main():
     ap.add_argument("dir", nargs="?", default=".")
     ap.add_argument("--fetch", action="store_true")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--port-only", action="store_true",
+                    help="require at least one frame on the capture's own port")
     a = ap.parse_args()
 
     ok, msg = selftest()
@@ -55,7 +61,7 @@ def main():
                             "frames": None, "status": "MISSING"})
             dead.append(name)
             continue
-        recs, err = run_one(path)
+        recs, err = run_one(path, port if a.port_only else None)
         if recs is None:
             summary.append({"capture": name, "transport": transport, "port": port,
                             "frames": None, "status": "PARSE-FAIL", "error": err})
@@ -80,7 +86,8 @@ def main():
         print()
         print(f"FAIL: {len(dead)}/{len(CAPTURES)} unusable: {dead}" if dead
               else f"PASS: all {len(CAPTURES)} captures yielded frames "
-                   f"({sum(s['frames'] for s in summary)} total)")
+             f"({sum(s['frames'] for s in summary)} total)")
+
     return 1 if dead else 0
 
 
