@@ -1,4 +1,4 @@
-# NSA_TAO_EQUATIONDRUG
+NATIONAL SECURITY AGENCY - EQUATIONGROUP - EQUATIONDRUG
 
 Parity reimplementation and protocol reconstruction of the Equation Group's
 post-exploitation toolkit — the PeddleCheap (Pc) implant and its Listening Post
