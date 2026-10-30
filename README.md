@@ -1,46 +1,70 @@
-NATIONAL SECURITY AGENCY - EQUATIONGROUP - EQUATIONDRUG
+# NSA TAO / Equation Group / EquationDrug
 
-Parity reimplementation and protocol reconstruction of the Equation Group's
-post-exploitation toolkit — the PeddleCheap (Pc) implant and its Listening Post
-wire protocol, the RC5/AES configuration crypto, and the EquationDrug
-ordinal-only plugin host — plus a pcap/log analysis harness validated against
-the leak's own artifacts.
+[![GitHub Repo](https://img.shields.io/badge/GitHub-ProjectZeroDays%2FNSA__TAO__EQUATIONGROUP__EQUATIONDRUG-181717?logo=github)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
+[![Stars](https://img.shields.io/github/stars/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/stargazers)
+[![Forks](https://img.shields.io/github/forks/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/network/members)
+[![Issues](https://img.shields.io/github/issues/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/issues)
+[![Language](https://img.shields.io/badge/Language-Python%2063%25%20%7C%20C%2031%25%20%7C%20Shell%204.9%25-blue)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
+[![Research](https://img.shields.io/badge/Scope-Reverse%20Engineering%20%26%20Protocol%20Reconstruction-8A2BE2)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
 
-    NSA TAO  ·  Tailored Access Operations  ·  Equation Group
+Parity reimplementation and protocol reconstruction of the NSA's Equation Group post-exploitation toolkit — the PeddleCheap (Pc) implant and its Listening Post wire protocol, the RC5/AES configuration crypto, and the EquationDrug ordinal-only plugin host, along with a pcap/log analysis harness validated against the leak's own artifacts.
 
----
+> This repository is a research-oriented reconstruction project focused on understanding leaked implant protocol details, configuration crypto, and plugin-host behavior for defensive analysis and protocol archaeology.
+
+## Overview
+
+This project reconstructs several components from the leaked Equation Group tooling, with emphasis on:
+
+- the PeddleCheap implant and Listening Post (LP) protocol
+- wire-level packet framing and direction-specific header layouts
+- RC5/AES configuration encryption logic
+- the ordinal-only EquationDrug plugin host and ABI
+- pcap and log analysis workflows used to validate findings against original artifacts
+
+The codebase aims to provide a faithful reimplementation grounded in leaked source artifacts and public reference material, rather than speculation.
+
+## What is included
+
+- protocol reconstruction and frame parsing logic
+- cryptographic configuration handling
+- harness code for validating captures and logs
+- analysis utilities for extracting and verifying artifacts
+- tests for protocol and crypto sanity checks
 
 ## Provenance
 
-Nothing is inferred. Every layout is re-derived from a primary source:
+Nothing is inferred without a primary source. The layout and behavior aim to be grounded in leaked artifacts and public documentation.
 
 | Source | Pins down |
-|---|---|
-| `dp_decrypt.py` (johnbergbom/PeddleCheap) | frame layouts, both directions, byte for byte |
-| DanderSpritz LP XML log | a reference parser naming the blob fields |
-| `Pc_Listen_Command.xml` | the authoritative `pc_listen` command surface |
-| `pc2_2/payload/config.py` | the `PCHEAP_CONFIG_*` flag vocabulary |
+| --- | --- |
+| `dp_decrypt.py` (johnbergbom/PeddleCheap) | frame layouts, both directions, byte-for-byte |
+| DanderSpritz LP XML log | reference parser naming blob fields |
+| `Pc_Listen_Command.xml` | authoritative `pc_listen` command surface |
+| `pc2_2/payload/config.py` | `PCHEAP_CONFIG_*` flag vocabulary |
 | `649/EquationDrug` | leaked binaries, plugin ABI, artifact map |
 
-## Protocol
+## Protocol highlights
 
-Frame headers **differ by direction**. A logged `DataSent: 24` is eight bytes of
-header plus one sixteen-byte AES block.
+Frame headers differ by direction. A logged `DataSent: 24` corresponds to eight bytes of header plus one sixteen-byte AES block.
 
-Implant to LP (POST body), 8-byte header:
+### Implant to LP (POST body)
 
-| off | field |
-|---|---|
+An eight-byte header is used for the implant-to-LP direction:
+
+| Offset | Field |
+| --- | --- |
 | +0 | `clear_text_length` (u32 BE) |
 | +4 | `length2` (u8) |
 | +5 | `symm_encr_used` (u8) |
 | +6 | reserved (u16) |
 | +8 | ciphertext |
 
-LP to implant (200 body, first sub-message), 16-byte header:
+### LP to implant (200 body, first sub-message)
 
-| off | field |
-|---|---|
+This direction uses a sixteen-byte header:
+
+| Offset | Field |
+| --- | --- |
 | +0 | reserved (u32) |
 | +4 | `seq` (u32 LE) |
 | +8 | `clear_text_length` (u32 BE) |
@@ -51,71 +75,101 @@ LP to implant (200 body, first sub-message), 16-byte header:
 
 Later sub-messages in a body reuse the implant-side header.
 
-Handshake: initial contact, RSA magic number, RSA-encrypted session key and
-platform metadata, OS version check, command poll, PayloadInfo run type plus
-File/Library info, export name, executable stream.
+### Crypto and session model
 
-Crypto: raw RSA-2048 (e = 65537, unpadded); AES-128-CBC with
-`IV_next = last ciphertext block`.
+- raw RSA-2048 using `e = 65537`, unpadded
+- AES-128-CBC with `IV_next = last ciphertext block`
+- handshake flow includes initial contact, RSA magic number, RSA-encrypted session key, platform metadata, OS version check, command poll, payload info, file/library info, export data, and executable streams
 
-## pc_listen surface
+## `pc_listen` surface
 
-| option | values |
-|---|---|
-| `run` | runType: egg=1, memlib=2, filelib=3, exe=4 |
-| `tcp` / `http` | protocol 0 / 1 |
+| Option | Values |
+| --- | --- |
+| `run` | `runType`: `egg=1`, `memlib=2`, `filelib=3`, `exe=4` |
+| `tcp` / `http` | protocol `0` / `1` |
 | `connectPrefix` | default `TlEo:` |
-| `maxConnectBytes` | default 12288 |
+| `maxConnectBytes` | default `12288` |
 
 `TlEo:` is a configurable connect prefix passed positionally, not a codename.
 
-## File/Library blob (36 bytes)
+## File/library blob
 
-| off | field | status |
-|---|---|---|
+The file/library blob layout includes fields that have been partially validated against artifacts:
+
+| Offset | Field | Status |
+| --- | --- | --- |
 | +16 | library type | candidate |
 | +20 | `0xdcce0000` | open |
 | +24 | `sendSize` (u32 BE) | confirmed |
 | +28 | `checksum` (u16 LE) | confirmed |
 | +30 | `runType` | candidate |
-| +32 | RunLibrary flags (u16 BE) | confirmed |
+| +32 | `RunLibrary` flags (u16 BE) | confirmed |
 
-`origSize` is absent from the blob; it comes from the compressed stream.
+`origSize` is absent from the blob; it is inferred from the compressed stream.
 
-## EquationDrug
+## EquationDrug details
 
-- ordinal-only plugin ABI: exports @1-@4, names stripped, shared with DanderSpritz
-- plugin IDs even and >= 0x8000; registry root `MemSubSys\1`
-- config records `[type u16][size u16][value]`; RC5-family cipher
-- artifacts: mutex `{01C482BA-...}`, event `{D0385CB7-...}`, log `~yh56816.tmp`
+The plugin-host side of the kit contains several notable properties:
 
-## Layout
+- ordinal-only plugin ABI
+- exports at `@1` through `@4`
+- names stripped and shared with DanderSpritz
+- plugin IDs are even and `>= 0x8000`
+- registry root: `MemSubSys\1`
+- config records are structured as `[type u16][size u16][value]`
+- RC5-family cipher usage
+- artifacts include named mutexes/events/logs such as `{01C482BA-...}`, `{D0385CB7-...}`, and `~yh56816.tmp`
 
-    include/ src/ def/ plugins/   C implementation
-    harness/                      pcap and log analysis, validation, runner
-    tests/                        RFC 2040 / FIPS-197 vector gates
-    docs/                         protocol reference, RE notes
-    results/                      generated output, committed by run.sh
+## Repository layout
 
-## Usage
+```text
+include/          C-compatible interface and derivations
+src/              core source and protocol logic
+def/              definitions and protocol constants
+plugins/          plugin-related assets and ABI artifacts
+harness/          pcap and log analysis, validation, runner
+results/          generated outputs committed by run.sh
+tests/            RFC 2040 / FIPS-197 vector gates
+docs/             protocol notes and reverse-engineering references
+```
 
-    export GH_PAT=<classic token with repo scope>
-    ./run.sh
+## Quick start
 
-Fetches inputs, runs the harness, writes `results/`, creates the public repo if
-absent, pushes, and prints OK/FAIL per step. No dependencies beyond `git`,
-`curl` and `python3` — the pcap reader is pure Python.
+```bash
+export GH_PAT=<classic token with repo scope>
+./run.sh
+```
+
+This fetches inputs, runs the analysis harness, writes output into `results/`, creates the public repo if absent, and pushes results while reporting OK/FAIL per step.
+
+### Requirements
+
+No dependencies beyond `git`, `curl`, and `python3` are required; the pcap reader is implemented in pure Python.
 
 ## Validation
 
-    python3 harness/extract.py --selftest
-    python3 harness/verify.py   --selftest
-    make test
+```bash
+python3 harness/extract.py --selftest
+python3 harness/verify.py --selftest
+make test
+```
 
 `run_all.py` exits non-zero if any capture yields no frames.
+
+## Security and research context
+
+This project deals with malware, implant protocols, and leaked tooling. It is intended for defensive research, protocol reconstruction, and malware analysis in controlled environments. It should not be used to facilitate unauthorized access or offensive operations.
 
 ## Sources
 
 - https://github.com/johnbergbom/PeddleCheap
 - https://github.com/francisck/DanderSpritz_docs
 - https://github.com/649/EquationDrug
+
+## License and usage
+
+The repository content is provided for research and forensic reconstruction. Please respect local laws, applicable policies, and the intended scope of analysis when using the code or artifacts contained herein.
+
+---
+
+Made for protocol archaeology, reverse engineering, and defensive analysis.
