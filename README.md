@@ -360,3 +360,5 @@ The repository content is provided for research and forensic reconstruction. Ple
 ---
 
 *Made for protocol archaeology, reverse engineering, and defensive analysis.*
+A r c h i t e c t u r e   r e f e r e n c e :   d o c s / P L A N . m d   ( 9   p h a s e s )   - >   i n c l u d e / p c _ p r o t o . h   - >   s r c / p c _ p r o t o . c   /   p e d d l e c h e a p . c   - >   t e s t s / h a n d s h a k e _ i t . c   - >   h a r n e s s / m o c k _ l p . p y   - >   b u i l d _ e q u i n o x . p y   - >   p a c k a g i n g / * . s h .   A l l   1 3   p a s s   g a t e s   m a p p e d   i n   d o c s / S T A T U S . m d .  
+ 
