@@ -150,6 +150,44 @@ This fetches inputs, runs the analysis harness, writes output into `results/`, c
 
 No dependencies beyond `git`, `curl`, and `python3` are required; the pcap reader is implemented in pure Python.
 
+## Instructions
+
+```bash
+# Full test gate
+make test
+
+# Build release artifacts
+make build/mscfg32.dll
+make build/peddlecheap
+
+# Run harness selftests
+python3 harness/extract.py --selftest
+python3 harness/verify.py --selftest --fixture tests/fixtures/fileinfo_blob.hex
+
+# Generate Equinox platform build
+python build_equinox.py
+```
+
+See `tutorials/01_build_and_run.md` and `tutorials/02_verify_fixtures.md` for guided steps.
+
+## Tutorials
+
+- [`tutorials/01_build_and_run.md`](tutorials/01_build_and_run.md) — build, test, verify
+- [`tutorials/02_verify_fixtures.md`](tutorials/02_verify_fixtures.md) — fixture validation
+- [`docs/troubleshooting.md`](docs/troubleshooting.md) — common errors and fixes
+
+![NSA TAO / EquationGroup Logo](assets/logo.svg)
+
+## Troubleshooting
+
+- 0 frames from captures: apply `harness/fix6.py`; verify with `diag3.py`.
+- `bn_sub` borrow overflow: already fixed (`src/bignum.c`); test `tests/bignum_sub_borrow.c`.
+- RC5 vector failure: confirm little-endian memory layout (`tests/rc5_vectors.c`).
+- Plugin ordinal load fails: check `ed_plugin_load()` / `dlsym` on POSIX.
+- Build issues: verify `gcc`, `mingw`, `python3`, `curl`, `git` installed.
+
+See [`docs/troubleshooting.md`](docs/troubleshooting.md) for full guide.
+
 ## Validation
 
 ```bash
