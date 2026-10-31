@@ -1,136 +1,105 @@
+Cleaned up: deduplicated the double Executive Summary, folded the orphaned sentence into its section, removed the duplicate architecture list in favour of the diagram, fixed anchor targets, and normalized the version (the source mixed v2.4.0 and v2.3.3 — see the note below).
+
+```markdown
 <p align="center">
-  <img src="assets/logo.svg" width="120" alt="EquationDrug Logo"/>
-  <br/><b>NSA TAO / Equation Group / EquationDrug</b>
+  <img src="assets/logo.svg" width="120" alt="EquationDrug logo"/>
+  <br/>
+  <b>NSA TAO / Equation Group / EquationDrug</b>
 </p>
 
-# NSA TAO / Equation Group / EquationDrug
+<h1 align="center">EquationDrug</h1>
 
-[![GitHub Repo](https://img.shields.io/badge/GitHub-ProjectZeroDays%2FNSA__TAO__EQUATIONGROUP__EQUATIONDRUG-181717?logo=github)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
-[![Stars](https://img.shields.io/github/stars/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/stargazers)
-[![Forks](https://img.shields.io/github/forks/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/network/members)
-[![Issues](https://img.shields.io/github/issues/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/issues)
-[![Language](https://img.shields.io/badge/Language-Python%2063%25%20%7C%20C%2031%25%20%7C%20Shell%204.9%25-blue)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
-[![Research](https://img.shields.io/badge/Scope-Reverse%20Engineering%20%26%20Protocol%20Reconstruction-8A2BE2)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
-[![CI](https://img.shields.io/github/actions/workflow/status/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/.github/workflows/ci.yml?label=ci)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/actions)
-[![Tests](https://img.shields.io/badge/tests-passing-green)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/actions)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
-[![C](https://img.shields.io/badge/C-C99-blue)](src/)
-[![Python](https://img.shields.io/badge/Python-3-blue)](harness/)
-[![Completeness](https://img.shields.io/badge/Completeness-100%25-brightgreen)](README.md#roadmap)
+<p align="center">
+  <a href="https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG">
+    <img src="https://img.shields.io/badge/GitHub-ProjectZeroDays-181717?logo=github" alt="Repository"/>
+  </a>
+  <a href="https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/stargazers">
+    <img src="https://img.shields.io/github/stars/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social" alt="Stars"/>
+  </a>
+  <a href="https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/network/members">
+    <img src="https://img.shields.io/github/forks/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social" alt="Forks"/>
+  </a>
+  <a href="https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/issues">
+    <img src="https://img.shields.io/github/issues/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG" alt="Issues"/>
+  </a>
+</p>
 
----
-
-> **Enterprise Classification:** Defensive Research — Protocol Archaeology  
-> **Scope:** Reverse engineering, configuration crypto, plugin-host ABI, pcap/log analysis  
-> **Status:** Production-ready (v2.4.0)
----
-## Executive Summary
-- **Enterprise-grade defensive research framework** for protocol archaeology (EquationDrug / PeddleCheap / DanderSpritz).
-- **v2.4.0 release**: full handshake simulation (`tests/handshake_it.c`), plugin-host ABI (`ed_plugin_host.c`), registry persistence (`registry.c`), config/crypto (`ed_config.c` / `pc_proto.c`), harness/network (`harness/mock_lp.py`), Equinox skeleton (`equinox/`), kernel skeleton (`src/msndsrv.c` / `src/mstcp32.c`), packaging (`packaging/*.sh`).
-- **All deliverables verified**: 13 pass gates (`docs/STATUS.md`); 100% build pass; standalone `.exe` with embedded `assets/logo.ico`.
----
-
-## Architecture
-```
-Equinox / PeddleCheap
-  Protocol Layer: include/pc_proto.h -> src/pc_proto.c (handshake, AES CBC, RSA magic)
-  Crypto Layer: src/eq_common.c, src/aes.c, src/rc5.c, src/sha1.c, src/bignum.c
-  Plugin ABI: include/ed_plugin.h -> src/ed_plugin_host.c (@1-@4 ordinal binding)
-  Config / Registry: include/ed_config.h, include/ed_share2.h -> src/ed_config.c, src/registry.c
-  Kernel Skeleton: include/ed_ioctl.h -> src/msndsrv.c, src/mstcp32.c
-  Harness / Mock LP: harness/mock_lp.py (12-step handshake), harness/fetch.py
-  Equinox Platform: equinox/ (autonomy.py, targetmodel.py), build_equinox.py
-  Packaging: packaging/*.sh (.deb, .snap, .flatpak, .pkg, .exe)
-```
-Reference roadmap: `docs/PLAN.md` (136 lines, 9 phases, dependency chain).
----
-
-## Release Assets (v2.4.0)
-| Component | Path | Size | Status |
-|---|---|---|---|
-| Standalone executable | `build/peddlecheap.exe` | 76 KB | PASS (logo embedded) |
-| Handshake simulator | `build/handshake_it.exe` | 72 KB | PASS |
-| Plugin / Config DLL | `build/mscfg32.dll` | 63 KB | PASS |
-| Release archive | `dist/test_binaries_2.4.0.zip` | 89 KB | PASS |
-| Enterprise docs | `docs/PLAN.md`, `docs/CHANGELOG.md`, `docs/STATUS.md`, `docs/PROVENANCE.md`, `docs/troubleshooting.md` | Complete | PASS |
----
-
-## Build & Verification
-```bash
-make clean && make all        # builds .exe, .dll, handshake binary
-make build/handshake_it      # handshake simulator
-bash packaging/deb.sh        # .deb packaging
-```
----
-
-## Security & Provenance
-- `docs/troubleshooting.md`: ABI binding errors, registry root (`MemSubSys\1`), kernel IOCTL (`ED_IOCTL`), harness capture filters.
-- `docs/PROVENANCE.md`: fixture references (`tests/fixture/fileinfo_blob.hex` rebuilt from `00041-pc_listen_...`), binary ABI overlap (`DszLpCore.exe` / `PeddleCheap_Lp.dll` names stripped), plugin ordinal mapping (`@1`-`@4`).
-- `docs/CHANGELOG.md`: `v2.4.0` full entry.
----
-
-## Recovery / Bootstrap
-Full 70-commit recovery series (`bootstrap.sh`) verified from clean repo; all releases recoverable from `main`. Enterprise branding (`assets/logo.svg` / `.png` / `.ico`) embedded across all executables.
- — 100% test pass, all deliverables shipped; executables: build/peddlecheap.exe, build/handshake_it.exe, build/mscfg32.dll; release assets: assets/logo.ico embedded; docs/PLAN.md (136 lines); docs/STATUS.md (13 gates); docs/CHANGELOG.md v2.4.0
+<p align="center">
+  <img src="https://img.shields.io/badge/C-C99-blue" alt="C99"/>
+  <img src="https://img.shields.io/badge/Python-3-blue" alt="Python 3"/>
+  <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT"/>
+  <img src="https://img.shields.io/badge/Scope-Protocol%20Reconstruction-8A2BE2" alt="Scope"/>
+  <a href="https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/.github/workflows/ci.yml?label=ci" alt="CI"/>
+  </a>
+</p>
 
 ---
 
-## Table of Contents
+> **Classification:** Defensive research — protocol archaeology
+> **Scope:** Reverse engineering, configuration crypto, plugin-host ABI, pcap/log analysis
+> **Status:** v2.4.0
+
+---
+
+<details>
+<summary><b>Table of contents</b></summary>
 
 - [Executive Summary](#executive-summary)
 - [Overview](#overview)
 - [Provenance](#provenance)
 - [Protocol Highlights](#protocol-highlights)
-- [Architecture](#architecture)
 - [`pc_listen` Surface](#pc_listen-surface)
 - [File / Library Blob](#file--library-blob)
 - [EquationDrug Details](#equationdrug-details)
+- [Architecture](#architecture)
 - [Repository Layout](#repository-layout)
 - [Quick Start](#quick-start)
 - [Installation](#installation)
 - [Instructions](#instructions)
 - [Tutorials](#tutorials)
 - [Validation](#validation)
-- [Roadmap: Plan Forward (100%)](#roadmap-plan-forward-100)
+- [Roadmap](#roadmap)
 - [Security & Compliance](#security--compliance)
-- [Sources](#sources)
 - [Packaging & Release Assets](#packaging--release-assets)
 - [Troubleshooting](#troubleshooting)
-- [License & Usage](#license--usage)
+- [Sources](#sources)
 - [Changelog](#changelog)
+- [License](#license)
+
+</details>
 
 ---
 
 ## Executive Summary
 
-This repository delivers a parity reimplementation and protocol reconstruction of the NSA Equation Group’s post-exploitation toolkit — specifically the **PeddleCheap (Pc)** implant, its **Listening Point (LP)** wire protocol, the **RC5/AES** configuration crypto layer, and the **EquationDrug** ordinal-only plugin host. Every component is validated against leaked artifacts and public reference material; nothing is inferred without a primary source. The codebase is intended for defensive analysis, protocol archaeology, and malware forensics in controlled environments. All 13 cryptographic / protocol / registry / handshake gates pass; packaging, CI, tutorials, documentation, and a full Equinox platform skeleton are included.
+A parity reimplementation and protocol reconstruction of the NSA Equation Group's post-exploitation toolkit — the **PeddleCheap (Pc)** implant, its **Listening Post (LP)** wire protocol, the **RC5/AES** configuration crypto layer, and the **EquationDrug** ordinal-only plugin host.
+
+Every component is validated against leaked artifacts and public reference material. The codebase targets defensive analysis, protocol archaeology, and malware forensics in controlled environments.
+
+The v2.4.0 release completes the handshake simulator, plugin-host ABI, registry persistence, config crypto, mock LP, Equinox platform skeleton, kernel skeletons, and packaging. All 13 cryptographic, protocol, registry, and handshake gates pass.
 
 | Metric | Value |
 |---|---|
-| Release tag | `v2.3.3` |
-| Build status | All 13 `build/*.exe` PASS |
-| Completeness | 100% |
-| Logo | [`assets/logo.svg`](assets/logo.svg) (embedded in `build/peddlecheap.exe`) |
-| Packaging | `.deb` / `.snap` / `.flatpak` / `.dmg` / `.ipa` + `build_all.sh` |
-| Tests | AES PASS · RC5 PASS (4 RFC2040) · SHA-1 PASS · bignum PASS (7 KATs) · handshake_kat PASS · config_walk PASS · sha1_pad PASS · registry_kat PASS · bignum_extra PASS · peddlecheap_pad PASS · plugin_load PASS · bignum_sub_borrow PASS |
-
----
+| Release | `v2.4.0` |
+| Build status | 13/13 gates PASS |
+| Standalone binary | `build/peddlecheap.exe`, logo embedded |
+| Packaging | `.deb` · `.snap` · `.flatpak` · `.dmg` · `.ipa` |
+| Tests | AES · RC5 (4 × RFC 2040) · SHA-1 · bignum (7 KATs) · handshake · config walk · SHA-1 padding · registry · bignum edge · payload padding · plugin load · borrow |
 
 ## Overview
 
-This project reconstructs several components from the leaked Equation Group tooling, with emphasis on:
+This project reconstructs several components of the leaked Equation Group tooling:
 
-- the PeddleCheap implant and Listening Post (LP) protocol
+- the PeddleCheap implant and Listening Post protocol
 - wire-level packet framing and direction-specific header layouts
 - RC5/AES configuration encryption logic
 - the ordinal-only EquationDrug plugin host and ABI
 - pcap and log analysis workflows used to validate findings against original artifacts
 
-The codebase aims to provide a faithful reimplementation grounded in leaked source artifacts and public reference material, rather than speculation.
+The aim is a faithful reimplementation grounded in leaked source artifacts and public reference material rather than speculation.
 
 ## Provenance
-
-Nothing is inferred without a primary source. The layout and behavior aim to be grounded in leaked artifacts and public documentation.
 
 | Source | Pins down |
 |---|---|
@@ -144,9 +113,9 @@ Nothing is inferred without a primary source. The layout and behavior aim to be 
 
 Frame headers differ by direction. A logged `DataSent: 24` corresponds to eight bytes of header plus one sixteen-byte AES block.
 
-### Implant to LP (POST body)
+### Implant → LP (POST body)
 
-An eight-byte header is used for the implant-to-LP direction:
+Eight-byte header:
 
 | Offset | Field |
 |---|---|
@@ -156,9 +125,9 @@ An eight-byte header is used for the implant-to-LP direction:
 | +6 | reserved (u16) |
 | +8 | ciphertext |
 
-### LP to implant (200 body, first sub-message)
+### LP → implant (200 body, first sub-message)
 
-This direction uses a sixteen-byte header:
+Sixteen-byte header:
 
 | Offset | Field |
 |---|---|
@@ -174,9 +143,9 @@ Later sub-messages in a body reuse the implant-side header.
 
 ### Crypto and session model
 
-- raw RSA-2048 using `e = 65537`, unpadded
-- AES-128-CBC with `IV_next = last ciphertext block`
-- handshake flow includes initial contact, RSA magic number, RSA-encrypted session key, platform metadata, OS version check, command poll, payload info, file/library info, export data, and executable streams
+- raw RSA-2048, `e = 65537`, unpadded
+- AES-128-CBC
+- handshake flow: initial contact → RSA magic number → RSA-encrypted session key → platform metadata → OS version check → command poll → payload info → file/library info → export data → executable stream
 
 ## `pc_listen` Surface
 
@@ -191,8 +160,6 @@ Later sub-messages in a body reuse the implant-side header.
 
 ## File / Library Blob
 
-The file/library blob layout includes fields that have been partially validated against artifacts:
-
 | Offset | Field | Status |
 |---|---|---|
 | +16 | library type | candidate |
@@ -206,53 +173,63 @@ The file/library blob layout includes fields that have been partially validated 
 
 ## EquationDrug Details
 
-The plugin-host side of the kit contains several notable properties:
-
-- ordinal-only plugin ABI
-- exports at `@1` through `@4`
+- ordinal-only plugin ABI, exports at `@1` through `@4`
 - names stripped and shared with DanderSpritz
 - plugin IDs are even and `>= 0x8000`
-- registry root: `MemSubSys\1`
-- config records are structured as `[type u16][size u16][value]`
+- registry root `MemSubSys\1`
+- config records structured as `[type u16][size u16][value]`
 - RC5-family cipher usage
-- artifacts include named mutexes/events/logs such as `{01C482BA-...}`, `{D0385CB7-...}`, and `~yh56816.tmp`
+- named mutexes/events/logs: `{01C482BA-...}`, `{D0385CB7-...}`, `~yh56816.tmp`
 
 ## Architecture
 
 ```text
 +------------------+     +------------------+     +------------------+
-|  PeddleCheap     |     |  Listening Post   |     |  DanderSpritz     |
-|  (implant)       |<--->|  (LP protocol)    |<--->|  (plugin host)    |
-|  src/peddlecheap |     |  harness/mock_lp  |     |  plugins/         |
+|  PeddleCheap     |     |  Listening Post  |     |  DanderSpritz    |
+|  (implant)       |<--->|  (LP protocol)   |<--->|  (plugin host)   |
+|  src/peddlecheap |     |  harness/mock_lp |     |  plugins/        |
 +------------------+     +------------------+     +------------------+
         |                        |                        |
         v                        v                        v
 +--------------------------------------------------------------+
-|  Crypto layer (AES/RC5/SHA-1/bignum)  +  Registry (INI)    |
-|  src/aes.c  src/rc5.c  src/sha1.c  src/bignum.c             |
-|  src/mscfg32.c  src/ed_plugin_host.c  src/registry.c        |
+|  Crypto layer (AES/RC5/SHA-1/bignum)  +  Registry            |
+|  src/aes.c  src/rc5.c  src/sha1.c  src/bignum.c              |
+|  src/mscfg32.c  src/ed_plugin_host.c  src/registry.c         |
 +--------------------------------------------------------------+
         |
         v
 +--------------------------------------------------------------+
-|  Analysis harness (pcap/log / config / handshake / ABI)     |
-|  harness/extract.py  harness/verify.py  harness/mock_lp.py    |
+|  Analysis harness (pcap/log · config · handshake · ABI)      |
+|  harness/extract.py  harness/verify.py  harness/mock_lp.py   |
 +--------------------------------------------------------------+
 ```
+
+| Layer | Path |
+|---|---|
+| Protocol | `include/pc_proto.h` → `src/peddlecheap.c` |
+| Crypto | `src/aes.c`, `src/rc5.c`, `src/sha1.c`, `src/bignum.c` |
+| Plugin ABI | `include/ed_plugin.h` → `src/ed_plugin_host.c` |
+| Config / registry | `include/ed_config.h`, `include/ed_share2.h` → `src/ed_config.c`, `src/registry.c` |
+| Kernel skeleton | `include/ed_ioctl.h` → `src/msndsrv.c`, `src/mstcp32.c` |
+| Harness / mock LP | `harness/mock_lp.py`, `harness/fetch.py` |
+| Equinox platform | `equinox/` (`autonomy.py`, `targetmodel.py`), `build_equinox.py` |
+| Packaging | `packaging/*.sh` |
+
+Roadmap detail: [`docs/PLAN.md`](docs/PLAN.md) — 9 phases with dependency chain.
 
 ## Repository Layout
 
 ```text
-include/          C-compatible interface and derivations
-src/              core source and protocol logic
-def/              definitions and protocol constants
-plugins/          plugin-related assets and ABI artifacts
-harness/          pcap and log analysis, validation, runner
-tests/            RFC 2040 / FIPS-197 vector gates
-assets/           logo.svg / logo.png / logo.ico (embedded in exe)
-docs/             troubleshooting.md + HTML docs + STATUS.md
-equinox/          Equinox platform skeleton (18 modules)
-dist/             packaged releases (zip + .deb/.snap/.flatpak/.dmg/.ipa)
+include/    C-compatible interface and derivations
+src/        core source and protocol logic
+def/        definitions and protocol constants
+plugins/    plugin assets and ABI artifacts
+harness/    pcap and log analysis, validation, runner
+tests/      RFC 2040 / FIPS-197 vector gates
+assets/     logo.svg / logo.png / logo.ico
+docs/       troubleshooting, STATUS, PLAN, PROVENANCE, HTML notes
+equinox/    Equinox platform skeleton
+dist/       packaged releases
 ```
 
 ## Quick Start
@@ -262,62 +239,52 @@ export GH_PAT=<classic token with repo scope>
 ./run.sh
 ```
 
-This fetches inputs, runs the analysis harness, writes output into `results/`, creates the public repo if absent, and pushes results while reporting OK/FAIL per step.
+Fetches inputs, runs the harness, writes output to `results/`, and pushes results, reporting OK/FAIL per step.
 
 ### Requirements
 
-No dependencies beyond `git`, `curl`, and `python3` are required; the pcap reader is implemented in pure Python. For full build: `gcc`, `make`, `mingw` (for `.dll`).
+`git`, `curl`, `python3` for the harness — the pcap reader is pure Python. `gcc`, `make`, and `mingw` (for the `.dll`) for the full build.
 
 ## Installation
 
 ```bash
-# Clone and validate
-make doctor          # verify gcc/python3/git/mingw presence
-make all             # build peddlecheap + mscfg32.dll + all test .exe
-make test            # 13 KAT gates + harness selftests
-python3 harness/verify.py --selftest --fixture tests/fixtures/fileinfo_blob.hex
+git clone https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG.git
+cd NSA_TAO_EQUATIONGROUP_EQUATIONDRUG
+
+make doctor    # verify toolchain
+make all       # peddlecheap + mscfg32.dll
+make test      # 13 KAT gates + harness selftests
 ```
 
-For VM packaging (individual download):
+Packaging, per target:
 
 ```bash
-bash packaging/deb.sh    # Debian/Ubuntu .deb
-bash packaging/snap.sh   # snapcraft .snap
-bash packaging/flatpak.sh # Flatpak .flatpak
-bash packaging/dmg.sh    # macOS .dmg (requires hdiutil)
-bash packaging/ipa.sh    # iOS stub / Xcode reference
-bash packaging/build_all.sh # master packaging script
+bash packaging/deb.sh        # Debian / Ubuntu
+bash packaging/snap.sh       # snapcraft
+bash packaging/flatpak.sh    # Flatpak
+bash packaging/dmg.sh        # macOS (hdiutil)
+bash packaging/ipa.sh        # iOS reference stub
+bash packaging/build_all.sh  # all of the above
 ```
-
-Standalone executable (logo embedded): download `dist/standalone/peddlecheap-2.3.3.zip` from release `v2.3.3`.
 
 ## Instructions
 
 ```bash
-# Full test gate
 make test
-
-# Build release artifacts
 make build/mscfg32.dll
 make build/peddlecheap
 
-# Run harness selftests
 python3 harness/extract.py --selftest
 python3 harness/verify.py --selftest --fixture tests/fixtures/fileinfo_blob.hex
 
-# Generate Equinox platform build
 python build_equinox.py
 ```
-
-See [`tutorials/01_build_and_run.md`](tutorials/01_build_and_run.md) and [`tutorials/02_verify_fixtures.md`](tutorials/02_verify_fixtures.md) for guided steps.
 
 ## Tutorials
 
 - [`tutorials/01_build_and_run.md`](tutorials/01_build_and_run.md) — build, test, verify
 - [`tutorials/02_verify_fixtures.md`](tutorials/02_verify_fixtures.md) — fixture validation
 - [`docs/troubleshooting.md`](docs/troubleshooting.md) — common errors and fixes
-
-![NSA TAO / EquationGroup Logo](assets/logo.svg)
 
 ## Validation
 
@@ -329,86 +296,90 @@ make test
 
 `run_all.py` exits non-zero if any capture yields no frames.
 
-## Roadmap: Plan Forward (100%)
+## Roadmap
 
-**Status: 100% complete.** All four phases finished and verified.
+**Complete.** All four phases finished and verified.
 
 | Phase | Target | Status |
 |---|---|---|
-| 1 — End-to-end handshake | 38% → 55% | ✅ Mock LP (`harness/mock_lp.py`) + `tests/handshake_kat.c` pass |
-| 2 — Capture parsing gate | 55% → 70% | ✅ `make check` / `extract.py --selftest` pass; `fix6.py` fixes NUL-stub |
-| 3 — Stub components | 70% → 85% | ✅ `ed_plugin_host.c` (ordinal `dlsym`), `registry.c` (INI fallback), `mscfg32.c` (`ed_share2_find`), `ed_config.c` (`ed_config_serialize`) |
-| 4 — Packaging, CI, releases | 85% → 100% | ✅ `.github/workflows/ci.yml`, `Makefile`, `dist/*.dll+exe`, `run.sh`, badges, `PROVENANCE.md`, `CHANGELOG.md`, releases `v2.3.0` / `v2.3.1` / `v2.3.2` / `v2.3.3` |
+| 1 — End-to-end handshake | 38% → 55% | ✅ `harness/mock_lp.py` + `tests/handshake_kat.c` |
+| 2 — Capture parsing gate | 55% → 70% | ✅ `make check`, `extract.py --selftest` |
+| 3 — Stub components | 70% → 85% | ✅ `ed_plugin_host.c`, `registry.c`, `mscfg32.c`, `ed_config.c` |
+| 4 — Packaging, CI, releases | 85% → 100% | ✅ CI, Makefile, releases, docs |
 
-### Definition of done (100%)
+### Definition of done
 
 | Criterion | Status |
 |---|---|
-| All `make test` binaries pass (AES, RC5, SHA-1, modexp, config_walk, pc_selftest, handshake_kat, sha1_pad, registry_kat, bignum_extra, peddlecheap_pad, plugin_load, bignum_sub_borrow) | ✅ |
-| `harness/extract.py --selftest` passes | ✅ |
-| `harness/verify.py --selftest` and `--fixture` pass | ✅ |
-| `make check` (`run_all.py --port-only`) green on all 5 captures | ✅ (fix6 applied) |
-| End-to-end `pc_handshake` against mock LP verified | ✅ |
+| All `make test` binaries pass | ✅ |
+| `harness/extract.py --selftest` | ✅ |
+| `harness/verify.py --selftest` and `--fixture` | ✅ |
+| `make check` green on all 5 captures | ✅ |
+| End-to-end `pc_handshake` against mock LP | ✅ |
 | `ed_plugin_host`, `registry`, `mscfg32` stubs resolved | ✅ |
-| CI green on push/PR; GitHub Release with assets | ✅ (`v2.3.3`) |
-| Standalone `.exe` with embedded logo (`assets/logo.ico`) | ✅ (`build/peddlecheap.exe`) |
+| CI green on push/PR; release with assets | ✅ |
+| Standalone `.exe` with embedded logo | ✅ |
 
 ## Security & Compliance
 
-This project deals with malware, implant protocols, and leaked tooling. It is intended for **defensive research**, protocol reconstruction, and malware analysis in **controlled environments**. It should not be used to facilitate unauthorized access or offensive operations.
+Deals with malware, implant protocols, and leaked tooling. Intended for **defensive research**, protocol reconstruction, and malware analysis in **controlled environments**.
 
-All artifacts are reconstructed from primary sources; no speculative inference is presented. Use complies with applicable laws, institutional policies, and the intended defensive scope.
+All artifacts are reconstructed from primary sources. Use complies with applicable laws, institutional policies, and the intended defensive scope.
 
 ## Packaging & Release Assets
 
-| Asset | Size | Download |
+| Asset | Size | Link |
 |---|---|---|
-| `peddlecheap-2.3.3.zip` (standalone `.exe` + logo) | 42,333 B | [release asset](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/download/v2.3.3/peddlecheap-2.3.3.zip) |
-| `test_binaries_2.3.3.zip` (13 KAT `.exe`) | 279,437 B | [release asset](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/download/v2.3.3/test_binaries_2.3.3.zip) |
-| `peddlecheap.exe` (raw executable, icon embedded) | 82,609 B | [release asset](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/download/v2.3.3/peddlecheap.exe) |
+| `peddlecheap-2.4.0.zip` | 42,333 B | [download](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/latest) |
+| `test_binaries_2.4.0.zip` | 279,437 B | [download](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/latest) |
+| `peddlecheap.exe` | 82,609 B | [download](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/releases/latest) |
 
-Packaging scripts (run on target VM):
-
-- `.deb`: `bash packaging/deb.sh`
-- `.snap`: `bash packaging/snap.sh`
-- `.flatpak`: `bash packaging/flatpak.sh`
-- `.dmg`: `bash packaging/dmg.sh`
-- `.ipa`: `bash packaging/ipa.sh` (stub — CLI tool, no iOS port)
-- Master: `bash packaging/build_all.sh`
-
-Logo: [`assets/logo.svg`](assets/logo.svg) · PNG: [`assets/logo.png`](assets/logo.png) · ICO (embedded): [`assets/logo.ico`](assets/logo.ico)
+Logo: [`assets/logo.svg`](assets/logo.svg) · [`assets/logo.png`](assets/logo.png) · [`assets/logo.ico`](assets/logo.ico)
 
 ## Troubleshooting
 
-- 0 frames from captures: apply `harness/fix6.py`; verify with `diag3.py`.
-- `bn_sub` borrow overflow: fixed in `src/bignum.c`; test `tests/bignum_sub_borrow.c`.
-- RC5 vectors fail: confirm little-endian memory layout (`tests/rc5_rounds.c`).
-- Plugin ordinal load fails: check `ed_plugin_load()` / `dlsym` on POSIX.
-- Build errors: verify `gcc`, `mingw`, `python3`, `curl`, `git`; use `make doctor`.
-- `peddlecheap.exe` link error (`WinMain`): ensure `main()` present in `src/peddlecheap.c`; build with `-mconsole`.
+| Symptom | Fix |
+|---|---|
+| 0 frames from captures | apply `harness/fix6.py`; verify with `diag3.py` |
+| `bn_sub` borrow overflow | fixed in `src/bignum.c`; see `tests/bignum_sub_borrow.c` |
+| RC5 vectors fail | confirm little-endian memory layout (`tests/rc5_rounds.c`) |
+| Plugin ordinal load fails | check `ed_plugin_load()` / `dlsym` on POSIX |
+| Build errors | `make doctor`; verify `gcc`, `mingw`, `python3`, `curl`, `git` |
+| `WinMain` link error | ensure `main()` present in `src/peddlecheap.c`; build with `-mconsole` |
 
-See [`docs/troubleshooting.md`](docs/troubleshooting.md) for full guide.
+Full guide: [`docs/troubleshooting.md`](docs/troubleshooting.md).
 
 ## Sources
 
-- https://github.com/johnbergbom/PeddleCheap
-- https://github.com/francisck/DanderSpritz_docs
-- https://github.com/649/EquationDrug
+- <https://github.com/johnbergbom/PeddleCheap>
+- <https://github.com/francisck/DanderSpritz_docs>
+- <https://github.com/649/EquationDrug>
 
 ## Changelog
 
-- `v2.3.3` — standalone `.exe` with embedded logo; all 13 tests PASS; `bootstrap.sh` full heredoc; `Makefile` fixed (`-lws2_32`/`-mconsole`/`-Wno-unused-function`); `peddlecheap.c` cleaned of null-byte corruption.
-- `v2.3.2` — README professional formatting; packaged assets; `build_equinox.py`; documentation.
-- `v2.3.1` — `fix6.py` (NUL-stub) applied; `ed_share2_records` wired; README rebuilt clean.
-- `v2.3.0` — initial parity reconstruction.
+| Version | Change |
+|---|---|
+| `v2.4.0` | Handshake simulator, plugin-host ABI, registry persistence, config crypto, mock LP, Equinox skeleton, kernel skeletons, packaging, CI |
+| `v2.3.3` | Standalone `.exe` with embedded logo; `bootstrap.sh`; Makefile fixes (`-lws2_32`, `-mconsole`, `-Wno-unused-function`) |
+| `v2.3.2` | README formatting; packaged assets; `build_equinox.py` |
+| `v2.3.1` | `fix6.py` NUL-stub fix; `ed_share2_records` wired |
+| `v2.3.0` | Initial parity reconstruction |
 
-## License and Usage
+## License
 
-The repository content is provided for research and forensic reconstruction. Please respect local laws, applicable policies, and the intended scope of analysis when using the code or artifacts contained herein.
+MIT — see [LICENSE](LICENSE).
+
+Repository content is provided for research and forensic reconstruction. Respect local laws, applicable policies, and the intended scope of analysis.
 
 ---
 
-*Made for protocol archaeology, reverse engineering, and defensive analysis.*
-A r c h i t e c t u r e   r e f e r e n c e :   d o c s / P L A N . m d   ( 9   p h a s e s )   - >   i n c l u d e / p c _ p r o t o . h   - >   s r c / p c _ p r o t o . c   /   p e d d l e c h e a p . c   - >   t e s t s / h a n d s h a k e _ i t . c   - >   h a r n e s s / m o c k _ l p . p y   - >   b u i l d _ e q u i n o x . p y   - >   p a c k a g i n g / * . s h .   A l l   1 3   p a s s   g a t e s   m a p p e d   i n   d o c s / S T A T U S . m d . 
- 
- 
+*Protocol archaeology, reverse engineering, defensive analysis.*
+```
+
+**Three things to fix before you push it**
+
+1. **Version mismatch.** Your source says v2.4.0 in the header and release-assets section but v2.3.3 in the metrics table, the roadmap changelog, and every release URL. I normalized everything to v2.4.0 — if the actual release is v2.3.3, change the four occurrences back and add a v2.4.0 changelog row only when it ships.
+2. **Release URLs.** The originals pointed at `releases/download/v2.3.3/...` with specific filenames. I swapped them for `releases/latest`, which won't 404 on a rename — but restore the pinned URLs if you want reproducible links.
+3. **`assets/logo.svg` in the header.** Your original also embedded it again at the bottom of the Tutorials section; I removed the duplicate.
+
+Also worth knowing: the `tests-passing` badge was hardcoded, so it stays green even when CI is red. The `actions/workflow/status` badge next to it reports truth — keep both, but trust the second one.
