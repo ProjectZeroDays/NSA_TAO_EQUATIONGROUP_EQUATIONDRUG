@@ -6,7 +6,7 @@ WARN    := -Werror=implicit-function-declaration
 CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c
 DLL  := $(CORE) src/mscfg32.c src/ed_config.c src/ed_plugin_host.c src/registry.c
 EXE  := $(CORE) src/peddlecheap.c
-TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat build/sha1_pad build/registry_kat build/bignum_extra build/peddlecheap_pad build/plugin_load
+TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat build/sha1_pad build/registry_kat build/bignum_extra build/peddlecheap_pad build/plugin_load build/bignum_sub_borrow
 
 all: build/peddlecheap build/mscfg32.dll
 build:
@@ -39,6 +39,8 @@ build/bignum_extra: tests/bignum_extra.c src/bignum.c src/eq_common.c | build
 build/peddlecheap_pad: tests/peddlecheap_pad.c $(CORE) src/peddlecheap.c src/eq_common.c | build
 	$(CC) $(CFLAGS) $(WARN) -o $@ $^ -lws2_32
 build/plugin_load: tests/plugin_load.c src/ed_plugin_host.c src/eq_common.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^
+build/bignum_sub_borrow: tests/bignum_sub_borrow.c src/bignum.c src/eq_common.c | build
 	$(CC) $(CFLAGS) $(WARN) -o $@ $^
 
 test: $(TESTS)
