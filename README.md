@@ -6,6 +6,12 @@
 [![Issues](https://img.shields.io/github/issues/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/issues)
 [![Language](https://img.shields.io/badge/Language-Python%2063%25%20%7C%20C%2031%25%20%7C%20Shell%204.9%25-blue)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
 [![Research](https://img.shields.io/badge/Scope-Reverse%20Engineering%20%26%20Protocol%20Reconstruction-8A2BE2)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
+[![CI](https://img.shields.io/github/actions/workflow/status/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/.github/workflows/ci.yml?label=ci)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/actions)
+[![Tests](https://img.shields.io/badge/tests-passing-green)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/actions)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![C](https://img.shields.io/badge/C-C99-blue)](src/)
+[![Python](https://img.shields.io/badge/Python-3-blue)](harness/)
+[![Completeness](https://img.shields.io/badge/Completeness-%7E38%25-yellow)](README.md#roadmap)
 
 Parity reimplementation and protocol reconstruction of the NSA's Equation Group post-exploitation toolkit — the PeddleCheap (Pc) implant and its Listening Post wire protocol, the RC5/AES configuration crypto, and the EquationDrug ordinal-only plugin host, along with a pcap/log analysis harness validated against the leak's own artifacts.
 
@@ -153,6 +159,60 @@ make test
 ```
 
 `run_all.py` exits non-zero if any capture yields no frames.
+
+## Roadmap: Plan Forward (38% → 100%)
+
+The project is approximately 38% complete. All crypto primitives and protocol frames are implemented and KAT-covered, but end-to-end protocol parity with the leaked artifacts has not yet been demonstrated. The path to 100% is organized into four phases:
+
+### Phase 1: End-to-end handshake validation (target: 38% → 55%)
+
+**Goal:** Drive `pc_handshake` against a mock Listening Post in C and prove every step completes with correct framing.
+
+- [ ] Implement `harness/mock_lp.py` — a TCP server that speaks the PeddleCheap wire protocol, replies with correctly-framed LP headers (16-byte first, 8-byte subsequent), and validates implant frame shapes (`clear`, `length2`, `encr`, pad 1..16).
+- [ ] Write `tests/handshake_kat.c` — compiles `peddlecheap.c` against the mock LP over loopback, runs the full 14-state handshake, and asserts the executable stream round-trips.
+- [ ] Fix `pc_send_hello`: it calls `bn_modexp(body, PC_RSA_LEN, hello, PC_HELLO_LEN, ...)` but `PC_HELLO_LEN=48` bytes of hello are RSA-encrypted into a 256-byte output — verify `body[PC_RSA_LEN..]` padding (8 bytes zero + 16-byte IV) matches the log.
+- [ ] Fix `pc_handshake` case 11: replaced `n >= 0x2000` guess with zero-length-frame termination via `pc_recv_exe` (already done in Commit 9) — now needs live verification.
+
+### Phase 2: Capture parsing gate goes green (target: 55% → 70%)
+
+**Goal:** `make check` (`python3 harness/run_all.py caps --port-only`) returns zero on all five captures.
+
+- [ ] Fetch the five pcaps from `johnbergbom/PeddleCheap` into `caps/` and confirm frames extract.
+- [ ] Audit `parse_frames` edge cases: SMB noise prefix on port 445, HTTP Content-Length body extraction, mid-stream joins, overrunning length resync.
+- [ ] Distinguish `encr=0` vs `encr=1` frame counts on raw TCP captures (ports 1163, 1167, 53) — thin frame counts may be legitimate.
+- [ ] Add `harness/extract.py` CLI `--verbose` debug mode to dump rejected candidates during resync.
+
+### Phase 3: Remaining stub components (target: 70% → 85%)
+
+**Goal:** Replace TODO stubs with functional implementations.
+
+- [ ] `src/ed_plugin_host.c` — non-Windows branch currently returns `EQ_OK` with no ordinals loaded; add `dlopen`/`dlsym` by ordinal for Linux builds.
+- [ ] `src/registry.c` — non-Windows branch returns `EQ_ERR`; add INI-file fallback under `~/.config/equationdrug/` for cross-platform testing.
+- [ ] `src/mscfg32.c` — `ed_config_from_share2` parses magic/size but doesn't surface parsed records to callers; wire `ed_config_find` results into `ed_config_parse` output.
+- [ ] `src/ed_config.c` — add `ed_config_serialize` (record table → byte blob) for round-trip testing.
+- [ ] `harness/log_parse.py` — extend to extract full `PayloadInfo` records (not just sendsize/checksum/flags) and cross-reference against `fileinfo_blob.hex`.
+
+### Phase 4: Packaging, CI, releases (target: 85% → 100%)
+
+**Goal:** Reproducible builds, signed artifacts, and automated releases.
+
+- [ ] Wire `.github/workflows/ci.yml` to run `make test` and `make check` on every push/PR.
+- [ ] Add `make dist` target producing `peddlecheap.exe`, `mscfg32.dll`, and source tarballs.
+- [ ] Create GitHub Release with executables as downloadable assets (see `gh release create`).
+- [ ] Add `CONTRIBUTING.md` with researcher onboarding, threat model, and safe-handling guidelines for malware artifacts.
+- [ ] Add `SECURITY.md` with responsible disclosure contact and scope of analysis.
+
+### Definition of done (100%)
+
+| Criterion | Status |
+|-----------|--------|
+| All `make test` binaries pass (AES, RC5, SHA-1, modexp, config_walk, pc_selftest) | ✅ |
+| `harness/extract.py --selftest` passes | ✅ |
+| `harness/verify.py --selftest` and `--fixture` pass | ✅ |
+| `make check` (`run_all.py --port-only`) green on all 5 captures | ⏳ Phase 2 |
+| End-to-end `pc_handshake` against mock LP verified | ⏳ Phase 1 |
+| `ed_plugin_host`, `registry`, `mscfg32` stubs resolved | ⏳ Phase 3 |
+| CI green on push/PR; GitHub Release with assets | ⏳ Phase 4 |
 
 ## Security and research context
 
