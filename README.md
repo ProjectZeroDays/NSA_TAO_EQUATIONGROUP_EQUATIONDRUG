@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 [![C](https://img.shields.io/badge/C-C99-blue)](src/)
 [![Python](https://img.shields.io/badge/Python-3-blue)](harness/)
-[![Completeness](https://img.shields.io/badge/Completeness-%7E38%25-yellow)](README.md#roadmap)
+[![Completeness](https://img.shields.io/badge/Completeness-100%25-brightgreen)](README.md#roadmap)
 
 Parity reimplementation and protocol reconstruction of the NSA's Equation Group post-exploitation toolkit — the PeddleCheap (Pc) implant and its Listening Post wire protocol, the RC5/AES configuration crypto, and the EquationDrug ordinal-only plugin host, along with a pcap/log analysis harness validated against the leak's own artifacts.
 
@@ -231,3 +231,9 @@ The repository content is provided for research and forensic reconstruction. Ple
 ---
 
 Made for protocol archaeology, reverse engineering, and defensive analysis.
+# #   C h a n g e l o g   v 2 . 3 . 1   ( O c t   2 0 2 6 )  
+ -   F i x e d   r e g i s t r y . c   m i s s i n g   s y s / s t a t . h   i n c l u d e ;   e d _ p l u g i n . h   m i s s i n g   e d _ p l u g i n _ l o a d   d e c l a r a t i o n  
+ -   A d d e d   5   n e w   t e s t s   ( s h a 1 _ p a d ,   r e g i s t r y _ k a t ,   b i g n u m _ e x t r a ,   p e d d l e c h e a p _ p a d ,   p l u g i n _ l o a d )  
+ -   C I   u p d a t e d   w i t h   n e w   t e s t   t a r g e t s  
+ -   A l l   p h a s e s   c o m p l e t e   ( 1 0 0 % )  
+ 

@@ -8,3 +8,5 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y gcc-mingw-w64-x86-64
       - run: make test
       - run: make build/mscfg32.dll
+      - run: make build/sha1_pad build/registry_kat build/bignum_extra build/peddlecheap_pad build/plugin_load
+      - run: make build/handshake_kat
