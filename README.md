@@ -1,4 +1,9 @@
-﻿# NSA TAO / Equation Group / EquationDrug
+﻿<p align="center">
+  <img src="assets/logo.svg" width="120" alt="EquationDrug Logo"/>
+  <br/><b>NSA TAO / Equation Group / EquationDrug</b>
+</p>
+
+# NSA TAO / Equation Group / EquationDrug
 
 [![GitHub Repo](https://img.shields.io/badge/GitHub-ProjectZeroDays%2FNSA__TAO__EQUATIONGROUP__EQUATIONDRUG-181717?logo=github)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG)
 [![Stars](https://img.shields.io/github/stars/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG?style=social)](https://github.com/ProjectZeroDays/NSA_TAO_EQUATIONGROUP_EQUATIONDRUG/stargazers)
