@@ -6,5 +6,6 @@
 #define ED_SHARE2_BODY  (ED_SHARE2_HDR - 8)       /* payload after magic+size */
 typedef struct { u32 magic; u32 size; u8 raw[ED_SHARE2_BODY]; } ed_share2_hdr;
 int ed_config_from_share2(const u8 *buf, size_t len);
+int ed_share2_records(const u8 *buf, size_t len, ed_record *out, size_t max);
 const ed_record *ed_share2_find(const ed_record *recs, size_t n, u16 type);
 #endif

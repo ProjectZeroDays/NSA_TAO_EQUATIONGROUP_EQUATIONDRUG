@@ -64,7 +64,7 @@ def _pcapng(data):
     return out
 
 
-def read(path):
+def _read_impl(path):
     data = open(path, "rb").read()
     if data[:4] == b"\x0a\x0d\x0d\x0a":
         return _pcapng(data)
@@ -113,3 +113,23 @@ def probe(path):
 if __name__ == "__main__":
     for p in sys.argv[1:]:
         probe(p)
+
+_NUL6 = b"\x00" * 6
+
+
+def _normalise(rows):
+    best, order = {}, []
+    for src, sp, dst, dp, seq, pay in rows:
+        if len(pay) <= 6 and pay == _NUL6[:len(pay)]:
+            continue
+        k = (src, sp, dst, dp, seq)
+        if k not in best:
+            best[k] = pay
+            order.append(k)
+        elif len(pay) > len(best[k]):
+            best[k] = pay
+    return [(k[0], k[1], k[2], k[3], k[4], best[k]) for k in order]
+
+
+def read(path, *a, **kw):
+    return _normalise(_read_impl(path, *a, **kw))

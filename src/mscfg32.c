@@ -23,6 +23,20 @@ int ed_config_from_share2(const u8 *buf, size_t len)
     return n;
 }
 
+/* Surface parsed records to caller (fix item 3). */
+int ed_share2_records(const u8 *buf, size_t len, ed_record *out, size_t max)
+{
+    ed_record local_recs[ED_CONFIG_MAX];
+    int n = ed_config_parse(buf + ED_SHARE2_HDR, eq_get_be32(buf + 4),
+                            local_recs, ED_CONFIG_MAX);
+    if (n < 0) return n;
+    if (out && max > 0) {
+        size_t cp = (size_t)n < max ? (size_t)n : max;
+        memcpy(out, local_recs, sizeof(ed_record) * cp);
+    }
+    return n;
+}
+
 /* Surface the parsed share2 records through ed_config_find-compatible access.
    Callers can iterate recs[0..n-1] after a successful call. */
 const ed_record *ed_share2_find(const ed_record *recs, size_t n, u16 type)
