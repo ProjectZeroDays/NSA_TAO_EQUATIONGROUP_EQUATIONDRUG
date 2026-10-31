@@ -7,8 +7,8 @@ static int bn_cmp(const bn *a, const bn *b){
     int i; for(i=BN_LIMBS-1;i>=0;i--) if(a->w[i]!=b->w[i]) return a->w[i]>b->w[i]?1:-1; return 0; }
 static void bn_sub(bn *r, const bn *a, const bn *b){
     int i; u64 borrow=0;
-    for(i=0;i<BN_LIMBS;i++){ u64 x=a->w[i], y=b->w[i], d=x-y-borrow;
-        borrow = (x < y + borrow) ? 1 : 0; r->w[i]=d; } }
+    for(i=0;i<BN_LIMBS;i++){ u64 x=a->w[i], y=b->w[i], yb=y+borrow;
+        borrow = (yb<y)||(x<yb)?1:0; r->w[i]=x-yb; } }
 static void bn_shl1(bn *r){ int i; u64 c=0; for(i=0;i<BN_LIMBS;i++){ u64 v=r->w[i]; r->w[i]=(v<<1)|c; c=v>>63; } }
 static int bn_bit(const bn *a, int n){ return (a->w[n>>6]>>(n&63)) & 1; }
 static int bn_bits(const bn *a){
@@ -33,6 +33,7 @@ void bn_to_bytes(u8 *be, size_t len, const bn *a)
     }
 }
 
+/* full 2n-limb product; no truncation */
 static void bn_mulwide(u64 *prod, const bn *a, const bn *b)
 {
     int i, j;
@@ -45,20 +46,21 @@ static void bn_mulwide(u64 *prod, const bn *a, const bn *b)
             prod[j + i] = (u64)p;
             carry = (u64)(p >> 64);
         }
-        prod[j + i] += carry;
+        prod[BN_LIMBS + i] += carry;
     }
 }
 
+/* bitwise shift-subtract: rem = (rem * 2 + bit_k) mod m.
+   msb tracks overflow from the shift before subtracting. */
 static void bn_reduce(bn *r, const u64 *wide, const bn *m)
 {
-    bn rem; int k, top = 0;
+    bn rem; int k;
     bn_zero(&rem);
     for (k = BN_WIDE_LIMBS * 64 - 1; k >= 0; k--) {
-        int carry = (int)((rem.w[BN_LIMBS - 1] >> 63) & 1);
+        int msb = (int)((rem.w[BN_LIMBS - 1] >> 63) & 1);
         bn_shl1(&rem);
         rem.w[0] |= (wide[k >> 6] >> (k & 63)) & 1;
-        if (top || bn_cmp(&rem, m) >= 0) bn_sub(&rem, &rem, m);
-        top = carry;
+        if (msb || bn_cmp(&rem, m) >= 0) bn_sub(&rem, &rem, m);
     }
     memcpy(r, &rem, sizeof(bn));
 }
@@ -69,7 +71,7 @@ static void bn_mulmod(bn *r, const bn *a, const bn *b, const bn *m)
     bn res;
     bn_mulwide(prod, a, b);
     bn_reduce(&res, prod, m);
-    memcpy(r, &res, sizeof(bn));   /* safe when r aliases a or b */
+    memcpy(r, &res, sizeof(bn));
 }
 
 /* reduce an n-limb value through a zero-extended wide buffer */
@@ -93,7 +95,7 @@ int bn_modexp(u8 *out, size_t outlen, const u8 *base, size_t blen,
     bn_from_bytes(&e, exp, elen);
     bn_from_bytes(&m, mod, mlen);
     if (bn_is_zero(&m)) return EQ_ERR_ARG;
-    if (bn_cmp(&b, &m) >= 0) bn_mod(&b, &b, &m);  /* <--- FIXED */
+    if (bn_cmp(&b, &m) >= 0) bn_mod(&b, &b, &m);
     bn_zero(&acc); acc.w[0] = 1;
     bits = bn_bits(&e);
     while (bits > 0 && !((e.w[(bits - 1) >> 6] >> ((bits - 1) & 63)) & 1)) bits--;

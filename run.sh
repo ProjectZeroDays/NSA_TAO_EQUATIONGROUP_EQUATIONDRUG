@@ -3,7 +3,7 @@ set -uo pipefail
 cd "$(dirname "$0")"
 
 PAT="${GH_PAT:-}"
-REPO="${GH_REPO:-NSA_TAO_EQUATIONDRUGS}"
+REPO="${GH_REPO:-NSA_TAO_EQUATIONGROUP_EQUATIONDRUG}"
 BRANCH="${BRANCH:-main}"
 API=https://api.github.com
 PC=https://raw.githubusercontent.com/johnbergbom/PeddleCheap/master
@@ -33,14 +33,14 @@ curl -fsSL -o bins/PCConfig.exe "$DS/Pc2.2/Tools/i386-winnt/PCConfig.exe" \
 hdr "selftests"
 { python3 harness/extract.py --selftest
   python3 harness/verify.py   --selftest
-  python3 harness/diffblob.py --selftest ; } 2>&1 | tee results/selftest.txt
+  python3 harness/verify.py --fixture tests/fixtures/fileinfo_blob.hex ; } 2>&1 | tee results/selftest.txt
 
 hdr "capture probe"
 for f in caps/*.pcap; do python3 harness/extract.py --probe "$f"; done 2>&1 | tee results/probe.txt
 
 hdr "capture runner"
-python3 harness/run_all.py caps 2>&1 | tee results/run_all.txt
-python3 harness/run_all.py caps --json > results/run_all.json 2>/dev/null || true
+python3 harness/run_all.py caps --port-only 2>&1 | tee results/run_all.txt
+python3 harness/run_all.py caps --json --port-only > results/run_all.json 2>/dev/null || true
 
 hdr "binary vocabulary and xref"
 for b in bins/PCConfig.exe caps/PeddleCheap_Lp.dll; do

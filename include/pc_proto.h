@@ -37,9 +37,13 @@ typedef struct {
     u32       connid;
     u32       conn_counter;
     u32       seq;
+    u32       lp_seq;
     u8        session_key[16];
     u8        iv[16];
     int       crypto_on;
+    int       sub_msg;
+    u32       timeout_ms;
+    u8        ptbuf[PC_MAX_BODY];   /* per-session plaintext buffer (Commit 12) */
     pc_sock_t sock;
 } pc_session_t;
 

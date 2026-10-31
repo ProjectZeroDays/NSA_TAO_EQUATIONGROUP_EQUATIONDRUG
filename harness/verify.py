@@ -4,6 +4,9 @@ import argparse, sys
 
 WIDTHS = [(1, "u8"), (2, "u16"), (4, "u32"), (8, "u64")]
 
+CONFIRMED = {"sendsize": 24, "checksum": 28, "flags": 32}
+CANDIDATE = {"libtype": 16, "unk20": 20, "runtype": 30}
+
 
 def search(blob, value):
     hits = []
@@ -32,6 +35,25 @@ def run(blob, labelled):
     return ok
 
 
+def fixture(path):
+    blob = bytes.fromhex(open(path).read().replace("\n", "").strip())
+    assert len(blob) == 36, f"fixture is {len(blob)} bytes, expected 36"
+    ok = True
+    cases = [("sendsize", 24, 4, "big", 166644), ("checksum", 28, 2, "little", 0x5d20),
+             ("flags", 32, 2, "big", 0x0008)]
+    for label, off, w, end, want in cases:
+        got = int.from_bytes(blob[off:off + w], end)
+        hits = search(blob, want)
+        if got != want:
+            print(f"FAIL {label}: +{off} = 0x{got:x}, expected 0x{want:x}"); ok = False
+        else:
+            print(f"OK   {label} at +{off} (value verified; {len(hits)} total locations in blob)")
+    for label, off in CANDIDATE.items():
+        print(f"open {label} +{off} = {blob[off:off + 4].hex()} (candidate, not asserted)")
+    print("fixture: " + ("OK" if ok else "FAIL"))
+    return 0 if ok else 1
+
+
 def selftest():
     blob = bytearray(range(36))
     blob[24:28] = (166644).to_bytes(4, "big")
@@ -46,9 +68,12 @@ def main():
     ap.add_argument("blob", nargs="?")
     ap.add_argument("--value", action="append", default=[])
     ap.add_argument("--selftest", action="store_true")
+    ap.add_argument("--fixture")
     a = ap.parse_args()
     if a.selftest:
         return selftest()
+    if a.fixture:
+        return fixture(a.fixture)
     blob = open(a.blob, "rb").read()
     return 0 if run(blob, [(f"v{i}", int(v, 0)) for i, v in enumerate(a.value)]) else 1
 

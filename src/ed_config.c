@@ -2,27 +2,40 @@
 #include "rc5.h"
 #include <string.h>
 
+/* Records are [type u16 BE][size u16 BE][value]. A record that overruns the
+   buffer is an error, not a silent truncation: callers rely on the count. */
 int ed_config_parse(const u8 *buf, size_t len, ed_record *out, size_t max)
 {
     size_t off = 0, n = 0;
-    while (off + 4 <= len && n < max) {
+    if (!buf || !out) return EQ_ERR_ARG;
+    while (off + 4 <= len) {
         u16 type = eq_get_be16(buf + off);
         u16 size = eq_get_be16(buf + off + 2);
-        if (off + 4 + size > len) break;
+        if (off + 4 + size > len) return EQ_ERR_ARG;
+        if (n == max) return EQ_ERR_ARG;            /* caller's table too small */
         out[n].type = type;
         out[n].size = size;
         out[n].value = buf + off + 4;
         n++;
         off += 4 + size;
     }
+    if (off != len) return EQ_ERR_ARG;              /* trailing partial header */
     return (int)n;
 }
 
-int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen)
+const ed_record *ed_config_find(const ed_record *recs, size_t n, u16 type)
+{
+    size_t i;
+    for (i = 0; i < n; i++) if (recs[i].type == type) return &recs[i];
+    return NULL;
+}
+
+int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
+                        const u8 iv[8], int encrypt)
 {
     rc5_ctx c;
-    u8 iv[8] = {0};
-    if (len % 8) return EQ_ERR_ARG;
+    if (!buf || !key || !iv || len == 0 || (len % 8)) return EQ_ERR_ARG;
     if (rc5_init(&c, key, keylen) != EQ_OK) return EQ_ERR_CRYPTO;
-    return rc5_cbc_decrypt(&c, iv, buf, len, buf);
+    return encrypt ? rc5_cbc_encrypt(&c, iv, buf, len, buf)
+                   : rc5_cbc_decrypt(&c, iv, buf, len, buf);
 }
