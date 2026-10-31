@@ -11,4 +11,5 @@ int ed_config_parse(const u8 *buf, size_t len, ed_record *out, size_t max);
 const ed_record *ed_config_find(const ed_record *recs, size_t n, u16 type);
 int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
                         const u8 iv[8], int encrypt);
+size_t ed_config_serialize(const ed_record *recs, size_t n, u8 *out, size_t cap);
 #endif

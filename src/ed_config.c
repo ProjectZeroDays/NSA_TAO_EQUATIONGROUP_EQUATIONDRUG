@@ -39,3 +39,20 @@ int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
     return encrypt ? rc5_cbc_encrypt(&c, iv, buf, len, buf)
                    : rc5_cbc_decrypt(&c, iv, buf, len, buf);
 }
+
+/* Serialize a record table back to [type u16 BE][size u16 BE][value] bytes.
+   Returns the number of bytes written (or needed if out is NULL/cap too small). */
+size_t ed_config_serialize(const ed_record *recs, size_t n, u8 *out, size_t cap)
+{
+    size_t off = 0, i;
+    for (i = 0; i < n; i++) {
+        size_t need = 4 + recs[i].size;
+        if (out && off + need <= cap) {
+            eq_put_be16(out + off, recs[i].type);
+            eq_put_be16(out + off + 2, recs[i].size);
+            memcpy(out + off + 4, recs[i].value, recs[i].size);
+        }
+        off += need;
+    }
+    return off;
+}

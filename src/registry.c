@@ -65,10 +65,98 @@ int ed_reg_del(const char *logical)
     return rc == ERROR_SUCCESS ? EQ_OK : EQ_ERR;
 }
 #else
-int ed_reg_open(void) { return EQ_OK; }
-int ed_reg_set(const char *l, const u8 *v, u32 n) { (void)l; (void)v; (void)n; return EQ_ERR; }
-int ed_reg_get(const char *l, u8 *o, u32 c, u32 *g) { (void)l; (void)o; (void)c; (void)g; return EQ_ERR; }
-int ed_reg_del(const char *l) { (void)l; return EQ_ERR; }
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define ED_INI_PATH "~/.config/equationdrug/registry.ini"
+
+static char *ini_path(void)
+{
+    const char *home = getenv("HOME");
+    static char path[512];
+    if (home) {
+        snprintf(path, sizeof path, "%s/.config/equationdrug/registry.ini", home);
+    } else {
+        snprintf(path, sizeof path, ED_INI_PATH);
+    }
+    return path;
+}
+
+static int ini_ensure_dir(const char *path)
+{
+    char dir[512];
+    strncpy(dir, path, sizeof dir - 1);
+    char *slash = strrchr(dir, '/');
+    if (slash) *slash = '\0';
+    /* mkdir -p equivalent: try to create, ignore if exists */
+    (void)mkdir(dir, 0700);
+    return 0;
+}
+
+int ed_reg_open(void)
+{
+    ini_ensure_dir(ini_path());
+    return EQ_OK;
+}
+
+int ed_reg_set(const char *logical, const u8 *val, u32 len)
+{
+    char name[41]; FILE *f;
+    ed_reg_name(logical, name);
+    ini_ensure_dir(ini_path());
+    f = fopen(ini_path(), "a");
+    if (!f) return EQ_ERR;
+    fprintf(f, "[%s]\n", name);
+    for (u32 i = 0; i < len; i++) fprintf(f, "%02x", val[i]);
+    fprintf(f, "\n\n");
+    fclose(f);
+    return EQ_OK;
+}
+
+int ed_reg_get(const char *logical, u8 *out, u32 cap, u32 *got)
+{
+    char name[41]; FILE *f;
+    char line[256];
+    ed_reg_name(logical, name);
+    f = fopen(ini_path(), "r");
+    if (!f) return EQ_ERR;
+    int in_section = 0;
+    int found = 0;
+    while (fgets(line, sizeof line, f)) {
+        /* strip newline */
+        size_t n = strlen(line);
+        while (n > 0 && (line[n-1] == '\n' || line[n-1] == '\r')) line[--n] = '\0';
+        if (line[0] == '[' && line[strlen(line)-1] == ']') {
+            line[strlen(line)-1] = '\0';
+            in_section = (strcmp(line + 1, name) == 0);
+            continue;
+        }
+        if (in_section && strlen(line) > 0) {
+            /* hex pairs */
+            size_t hexlen = strlen(line);
+            size_t need = hexlen / 2;
+            if (need > cap) { fclose(f); return EQ_ERR_ARG; }
+            for (size_t i = 0; i < need; i++) {
+                unsigned int v;
+                sscanf(line + i * 2, "%2x", &v);
+                out[i] = (u8)v;
+            }
+            if (got) *got = (u32)need;
+            found = 1;
+            break;
+        }
+    }
+    fclose(f);
+    return found ? EQ_OK : EQ_ERR;
+}
+
+int ed_reg_del(const char *logical)
+{
+    /* Not implemented for INI fallback: mark as error */
+    (void)logical;
+    return EQ_ERR;
+}
 #endif
 
 const char *ed_reg_logical(ed_reg_field f)

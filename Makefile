@@ -6,7 +6,7 @@ WARN    := -Werror=implicit-function-declaration
 CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c
 DLL  := $(CORE) src/mscfg32.c src/ed_config.c src/ed_plugin_host.c src/registry.c
 EXE  := $(CORE) src/peddlecheap.c
-TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk
+TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat
 
 all: build/peddlecheap build/mscfg32.dll
 build:
@@ -27,6 +27,9 @@ build/pc_selftest: tests/pc_selftest.c src/eq_common.c | build
 	$(CC) $(CFLAGS) -o $@ $^
 build/config_walk: tests/config_walk.c src/ed_config.c src/rc5.c src/eq_common.c | build
 	$(CC) $(CFLAGS) -o $@ $^
+
+build/handshake_kat: tests/handshake_kat.c src/peddlecheap.c src/aes.c src/bignum.c src/sha1.c src/eq_common.c src/rc5.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^ -lws2_32
 
 test: $(TESTS)
 	@for t in $(TESTS); do ./$$t || exit 1; done
