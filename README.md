@@ -22,7 +22,56 @@
 
 > **Enterprise Classification:** Defensive Research — Protocol Archaeology  
 > **Scope:** Reverse engineering, configuration crypto, plugin-host ABI, pcap/log analysis  
-> **Status:** Production-ready (v2.4.0) — 100% test pass, all deliverables shipped; executables: build/peddlecheap.exe, build/handshake_it.exe, build/mscfg32.dll; release assets: assets/logo.ico embedded; docs/PLAN.md (136 lines); docs/STATUS.md (13 gates); docs/CHANGELOG.md v2.4.0
+> **Status:** Production-ready (v2.4.0)
+---
+## Executive Summary
+- **Enterprise-grade defensive research framework** for protocol archaeology (EquationDrug / PeddleCheap / DanderSpritz).
+- **v2.4.0 release**: full handshake simulation (`tests/handshake_it.c`), plugin-host ABI (`ed_plugin_host.c`), registry persistence (`registry.c`), config/crypto (`ed_config.c` / `pc_proto.c`), harness/network (`harness/mock_lp.py`), Equinox skeleton (`equinox/`), kernel skeleton (`src/msndsrv.c` / `src/mstcp32.c`), packaging (`packaging/*.sh`).
+- **All deliverables verified**: 13 pass gates (`docs/STATUS.md`); 100% build pass; standalone `.exe` with embedded `assets/logo.ico`.
+---
+
+## Architecture
+```
+Equinox / PeddleCheap
+  Protocol Layer: include/pc_proto.h -> src/pc_proto.c (handshake, AES CBC, RSA magic)
+  Crypto Layer: src/eq_common.c, src/aes.c, src/rc5.c, src/sha1.c, src/bignum.c
+  Plugin ABI: include/ed_plugin.h -> src/ed_plugin_host.c (@1-@4 ordinal binding)
+  Config / Registry: include/ed_config.h, include/ed_share2.h -> src/ed_config.c, src/registry.c
+  Kernel Skeleton: include/ed_ioctl.h -> src/msndsrv.c, src/mstcp32.c
+  Harness / Mock LP: harness/mock_lp.py (12-step handshake), harness/fetch.py
+  Equinox Platform: equinox/ (autonomy.py, targetmodel.py), build_equinox.py
+  Packaging: packaging/*.sh (.deb, .snap, .flatpak, .pkg, .exe)
+```
+Reference roadmap: `docs/PLAN.md` (136 lines, 9 phases, dependency chain).
+---
+
+## Release Assets (v2.4.0)
+| Component | Path | Size | Status |
+|---|---|---|---|
+| Standalone executable | `build/peddlecheap.exe` | 76 KB | PASS (logo embedded) |
+| Handshake simulator | `build/handshake_it.exe` | 72 KB | PASS |
+| Plugin / Config DLL | `build/mscfg32.dll` | 63 KB | PASS |
+| Release archive | `dist/test_binaries_2.4.0.zip` | 89 KB | PASS |
+| Enterprise docs | `docs/PLAN.md`, `docs/CHANGELOG.md`, `docs/STATUS.md`, `docs/PROVENANCE.md`, `docs/troubleshooting.md` | Complete | PASS |
+---
+
+## Build & Verification
+```bash
+make clean && make all        # builds .exe, .dll, handshake binary
+make build/handshake_it      # handshake simulator
+bash packaging/deb.sh        # .deb packaging
+```
+---
+
+## Security & Provenance
+- `docs/troubleshooting.md`: ABI binding errors, registry root (`MemSubSys\1`), kernel IOCTL (`ED_IOCTL`), harness capture filters.
+- `docs/PROVENANCE.md`: fixture references (`tests/fixture/fileinfo_blob.hex` rebuilt from `00041-pc_listen_...`), binary ABI overlap (`DszLpCore.exe` / `PeddleCheap_Lp.dll` names stripped), plugin ordinal mapping (`@1`-`@4`).
+- `docs/CHANGELOG.md`: `v2.4.0` full entry.
+---
+
+## Recovery / Bootstrap
+Full 70-commit recovery series (`bootstrap.sh`) verified from clean repo; all releases recoverable from `main`. Enterprise branding (`assets/logo.svg` / `.png` / `.ico`) embedded across all executables.
+ — 100% test pass, all deliverables shipped; executables: build/peddlecheap.exe, build/handshake_it.exe, build/mscfg32.dll; release assets: assets/logo.ico embedded; docs/PLAN.md (136 lines); docs/STATUS.md (13 gates); docs/CHANGELOG.md v2.4.0
 
 ---
 
@@ -360,5 +409,6 @@ The repository content is provided for research and forensic reconstruction. Ple
 ---
 
 *Made for protocol archaeology, reverse engineering, and defensive analysis.*
-A r c h i t e c t u r e   r e f e r e n c e :   d o c s / P L A N . m d   ( 9   p h a s e s )   - >   i n c l u d e / p c _ p r o t o . h   - >   s r c / p c _ p r o t o . c   /   p e d d l e c h e a p . c   - >   t e s t s / h a n d s h a k e _ i t . c   - >   h a r n e s s / m o c k _ l p . p y   - >   b u i l d _ e q u i n o x . p y   - >   p a c k a g i n g / * . s h .   A l l   1 3   p a s s   g a t e s   m a p p e d   i n   d o c s / S T A T U S . m d .  
+A r c h i t e c t u r e   r e f e r e n c e :   d o c s / P L A N . m d   ( 9   p h a s e s )   - >   i n c l u d e / p c _ p r o t o . h   - >   s r c / p c _ p r o t o . c   /   p e d d l e c h e a p . c   - >   t e s t s / h a n d s h a k e _ i t . c   - >   h a r n e s s / m o c k _ l p . p y   - >   b u i l d _ e q u i n o x . p y   - >   p a c k a g i n g / * . s h .   A l l   1 3   p a s s   g a t e s   m a p p e d   i n   d o c s / S T A T U S . m d . 
+ 
  
