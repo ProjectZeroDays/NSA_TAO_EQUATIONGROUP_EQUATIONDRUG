@@ -6,7 +6,7 @@ WARN    := -Werror=implicit-function-declaration
 CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c
 DLL  := $(CORE) src/mscfg32.c src/ed_config.c src/ed_plugin_host.c src/registry.c
 EXE  := $(CORE) src/peddlecheap.c
-TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat
+TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat build/sha1_pad build/registry_kat build/bignum_extra build/peddlecheap_pad build/plugin_load
 
 all: build/peddlecheap build/mscfg32.dll
 build:
@@ -30,6 +30,16 @@ build/config_walk: tests/config_walk.c src/ed_config.c src/rc5.c src/eq_common.c
 
 build/handshake_kat: tests/handshake_kat.c src/peddlecheap.c src/aes.c src/bignum.c src/sha1.c src/eq_common.c src/rc5.c | build
 	$(CC) $(CFLAGS) $(WARN) -o $@ $^ -lws2_32
+build/sha1_pad: tests/sha1_pad.c src/sha1.c | build
+	$(CC) $(CFLAGS) -o $@ $^
+build/registry_kat: tests/registry_kat.c src/registry.c src/sha1.c src/eq_common.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^
+build/bignum_extra: tests/bignum_extra.c src/bignum.c src/eq_common.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^
+build/peddlecheap_pad: tests/peddlecheap_pad.c $(CORE) src/peddlecheap.c src/eq_common.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^ -lws2_32
+build/plugin_load: tests/plugin_load.c src/ed_plugin_host.c src/eq_common.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^
 
 test: $(TESTS)
 	@for t in $(TESTS); do ./$$t || exit 1; done

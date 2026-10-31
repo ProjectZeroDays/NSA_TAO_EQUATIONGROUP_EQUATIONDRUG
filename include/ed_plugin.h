@@ -11,4 +11,8 @@ typedef void (*ed_ordinal4_fn)(void);
 
 #define ED_PLUGIN_ID_MIN 0x8000
 #define ED_REG_KEY "MemSubSys\\1"
+
+void *ed_plugin_open(const char *path);
+void ed_plugin_close(void *h);
+int ed_plugin_load(void *dll_handle, void **out_ordinals);
 #endif

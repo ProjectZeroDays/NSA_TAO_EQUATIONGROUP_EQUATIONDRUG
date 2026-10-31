@@ -68,6 +68,8 @@ int ed_reg_del(const char *logical)
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #define ED_INI_PATH "~/.config/equationdrug/registry.ini"
 
