@@ -238,3 +238,7 @@ The repository content is provided for research and forensic reconstruction. Ple
 ---
 
 *Made for protocol archaeology, reverse engineering, and defensive analysis.*
+ 
+ # #   P a c k a g i n g  
+ G e n e r a t e   . d e b   /   . s n a p   /   . f l a t p a k   /   . d m g   /   . i p a   f r o m   V M   ( s e e   p a c k a g i n g /   s c r i p t s ) .   L o g o :   a s s e t s / l o g o . s v g .  
+ 
