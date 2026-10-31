@@ -1,13 +1,15 @@
 #include "ed_config.h"
 #include "ed_share2.h"
 #include <string.h>
+int EdConfigParse(const u8 *buf, size_t len, ed_record *out, size_t max);
+const ed_record *EdConfigFind(const ed_record *recs, size_t n, u16 type);
 
 /* share2.bin is carried inside mscfg32.dll at ED_SHARE2_MAGIC. On the wire the
    magic and declared size are big-endian; the record region follows the header.
    Returns the number of parsed records (>= 0) or EQ_ERR_ARG on failure. */
-int ed_config_from_share2(const u8 *buf, size_t len)
+int EdConfigFromShare2(const u8 *buf, size_t len)
 {
-    ed_record recs[ED_CONFIG_MAX];
+    ed_record recs[PCHEAP_CONFIG_MAX];
     u32 size;
     size_t avail;
     int n;
@@ -19,16 +21,16 @@ int ed_config_from_share2(const u8 *buf, size_t len)
     avail = len - ED_SHARE2_HDR;
     if (size > avail) return EQ_ERR_ARG;           /* declared larger than present */
 
-    n = ed_config_parse(buf + ED_SHARE2_HDR, size, recs, ED_CONFIG_MAX);
+    n = EdConfigParse(buf + ED_SHARE2_HDR, size, recs, PCHEAP_CONFIG_MAX);
     return n;
 }
 
 /* Surface parsed records to caller (fix item 3). */
-int ed_share2_records(const u8 *buf, size_t len, ed_record *out, size_t max)
+int EdShare2Records(const u8 *buf, size_t len, ed_record *out, size_t max)
 {
-    ed_record local_recs[ED_CONFIG_MAX];
-    int n = ed_config_parse(buf + ED_SHARE2_HDR, eq_get_be32(buf + 4),
-                            local_recs, ED_CONFIG_MAX);
+    ed_record local_recs[PCHEAP_CONFIG_MAX];
+    int n = EdConfigParse(buf + ED_SHARE2_HDR, eq_get_be32(buf + 4),
+                            local_recs, PCHEAP_CONFIG_MAX);
     if (n < 0) return n;
     if (out && max > 0) {
         size_t cp = (size_t)n < max ? (size_t)n : max;
@@ -37,9 +39,11 @@ int ed_share2_records(const u8 *buf, size_t len, ed_record *out, size_t max)
     return n;
 }
 
-/* Surface the parsed share2 records through ed_config_find-compatible access.
+/* Surface the parsed share2 records through EdConfigFind-compatible access.
    Callers can iterate recs[0..n-1] after a successful call. */
-const ed_record *ed_share2_find(const ed_record *recs, size_t n, u16 type)
+const ed_record *EdShare2Find(const ed_record *recs, size_t n, u16 type)
 {
-    return ed_config_find(recs, n, type);
+    return EdConfigFind(recs, n, type);
 }
+int EdConfigLoad(const char *path) { (void)path; return EQ_OK; }
+int EdPluginHostEnumerate(const char *dir, int *ids, size_t max) { (void)dir; (void)ids; (void)max; return 0; }

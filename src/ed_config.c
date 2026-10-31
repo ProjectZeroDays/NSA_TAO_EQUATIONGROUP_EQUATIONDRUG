@@ -4,7 +4,7 @@
 
 /* Records are [type u16 BE][size u16 BE][value]. A record that overruns the
    buffer is an error, not a silent truncation: callers rely on the count. */
-int ed_config_parse(const u8 *buf, size_t len, ed_record *out, size_t max)
+int EdConfigParse(const u8 *buf, size_t len, ed_record *out, size_t max)
 {
     size_t off = 0, n = 0;
     if (!buf || !out) return EQ_ERR_ARG;
@@ -23,14 +23,14 @@ int ed_config_parse(const u8 *buf, size_t len, ed_record *out, size_t max)
     return (int)n;
 }
 
-const ed_record *ed_config_find(const ed_record *recs, size_t n, u16 type)
+const ed_record *EdConfigFind(const ed_record *recs, size_t n, u16 type)
 {
     size_t i;
     for (i = 0; i < n; i++) if (recs[i].type == type) return &recs[i];
     return NULL;
 }
 
-int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
+int EdConfigCryptRc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
                         const u8 iv[8], int encrypt)
 {
     rc5_ctx c;
@@ -42,7 +42,7 @@ int ed_config_crypt_rc5(u8 *buf, size_t len, const u8 *key, size_t keylen,
 
 /* Serialize a record table back to [type u16 BE][size u16 BE][value] bytes.
    Returns the number of bytes written (or needed if out is NULL/cap too small). */
-size_t ed_config_serialize(const ed_record *recs, size_t n, u8 *out, size_t cap)
+size_t EdConfigSerialize(const ed_record *recs, size_t n, u8 *out, size_t cap)
 {
     size_t off = 0, i;
     for (i = 0; i < n; i++) {

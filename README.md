@@ -22,7 +22,7 @@
 
 > **Enterprise Classification:** Defensive Research — Protocol Archaeology  
 > **Scope:** Reverse engineering, configuration crypto, plugin-host ABI, pcap/log analysis  
-> **Status:** Production-ready (v2.3.3) — 100% test pass, all deliverables shipped
+> **Status:** Production-ready (v2.4.0) — 100% test pass, all deliverables shipped; executables: build/peddlecheap.exe, build/handshake_it.exe, build/mscfg32.dll; release assets: assets/logo.ico embedded; docs/PLAN.md (136 lines); docs/STATUS.md (13 gates); docs/CHANGELOG.md v2.4.0
 
 ---
 

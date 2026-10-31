@@ -18,7 +18,7 @@
 void pc_set_timeouts(int sock, int ms) { (void)sock; (void)ms; }
 void pc_random(u8 *out, size_t len) { memset(out, 0xAA, len); }
 void pc_build_hello(u8 out[PC_HELLO_LEN], const pc_session_t *s) {
-    memset(out, 0, PC_HELLO_LEN);
+    (void)s; memset(out, 0, PC_HELLO_LEN);
     out[0] = 0xFE; out[1] = PC_VER_MAJOR; out[2] = PC_VER_SUB;
     out[3] = PC_VER_MINOR; out[4] = PC_VER_BUILD;
 }

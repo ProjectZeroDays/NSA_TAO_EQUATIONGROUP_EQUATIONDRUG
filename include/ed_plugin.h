@@ -14,5 +14,5 @@ typedef void (*ed_ordinal4_fn)(void);
 
 void *ed_plugin_open(const char *path);
 void ed_plugin_close(void *h);
-int ed_plugin_load(void *dll_handle, void **out_ordinals);
+int ed_plugin_load(void *dll_handle, void **out_ordinals, int *teardown_count);
 #endif
