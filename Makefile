@@ -1,7 +1,7 @@
 CC      ?= gcc
 MINGW   ?= x86_64-w64-mingw32-gcc
 CFLAGS  ?= -O2 -Wall -Wextra -std=c99 -Iinclude
-WARN    := -Werror=implicit-function-declaration
+WARN    := -Werror=implicit-function-declaration -Wno-unused-function
 
 CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c
 DLL  := $(CORE) src/mscfg32.c src/ed_config.c src/ed_plugin_host.c src/registry.c
@@ -12,7 +12,7 @@ all: build/peddlecheap build/mscfg32.dll
 build:
 	@mkdir -p build
 build/peddlecheap: $(EXE) | build
-	$(CC) $(CFLAGS) $(WARN) -o $@ $(EXE)
+	$(CC) $(CFLAGS) $(WARN) -mconsole -o $@ $(EXE) -lws2_32
 build/mscfg32.dll: $(DLL) def/mscfg32.def | build
 	$(MINGW) $(CFLAGS) $(WARN) -shared -o $@ $(DLL) def/mscfg32.def -lws2_32
 build/rc5_vectors: tests/rc5_vectors.c src/rc5.c src/eq_common.c | build
