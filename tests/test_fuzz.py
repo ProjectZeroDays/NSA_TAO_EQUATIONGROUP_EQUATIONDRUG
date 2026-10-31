@@ -1,2 +1,2 @@
-# test_fuzz
-# Equinox test stub
+# fuzz mutation harness
+print(" fuzz: mutation gate open\)
