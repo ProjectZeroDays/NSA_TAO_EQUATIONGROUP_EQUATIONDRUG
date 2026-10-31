@@ -1,5 +1,6 @@
 caps/
 bins/
 build/
+results/
 *.pyc
 __pycache__/

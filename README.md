@@ -128,9 +128,7 @@ src/              core source and protocol logic
 def/              definitions and protocol constants
 plugins/          plugin-related assets and ABI artifacts
 harness/          pcap and log analysis, validation, runner
-results/          generated outputs committed by run.sh
 tests/            RFC 2040 / FIPS-197 vector gates
-docs/             protocol notes and reverse-engineering references
 ```
 
 ## Quick start
