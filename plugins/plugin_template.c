@@ -9,3 +9,6 @@ u32 ed_ordinal3(void *in, u32 in_len, void *out, u32 out_cap)
     (void)in; (void)in_len; (void)out; (void)out_cap; return 0;
 }
 void ed_ordinal4(void) { }
+
+/* runType mapping: egg(1)/memlib(2)/filelib(3)/exe(4) -> PC_RUN_* values */
+u32 ed_plugin_run_type(void) { return 1; }
