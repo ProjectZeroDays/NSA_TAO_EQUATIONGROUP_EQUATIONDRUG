@@ -12,7 +12,7 @@ all: build/peddlecheap build/mscfg32.dll
 build:
 	@mkdir -p build
 build/peddlecheap: $(EXE) | build
-	$(CC) $(CFLAGS) $(WARN) -mconsole -o $@ $(EXE) -lws2_32
+	$(CC) $(CFLAGS) $(WARN) -mconsole -o $@ $(EXE) icon.o -lws2_32
 build/mscfg32.dll: $(DLL) def/mscfg32.def | build
 	$(MINGW) $(CFLAGS) $(WARN) -shared -o $@ $(DLL) def/mscfg32.def -lws2_32
 build/rc5_vectors: tests/rc5_vectors.c src/rc5.c src/eq_common.c | build
