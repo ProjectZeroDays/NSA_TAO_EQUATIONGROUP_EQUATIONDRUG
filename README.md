@@ -1,6 +1,3 @@
-Cleaned up: deduplicated the double Executive Summary, folded the orphaned sentence into its section, removed the duplicate architecture list in favour of the diagram, fixed anchor targets, and normalized the version (the source mixed v2.4.0 and v2.3.3 — see the note below).
-
-```markdown
 <p align="center">
   <img src="assets/logo.svg" width="120" alt="EquationDrug logo"/>
   <br/>
@@ -370,16 +367,6 @@ Full guide: [`docs/troubleshooting.md`](docs/troubleshooting.md).
 MIT — see [LICENSE](LICENSE).
 
 Repository content is provided for research and forensic reconstruction. Respect local laws, applicable policies, and the intended scope of analysis.
-
 ---
 
-*Protocol archaeology, reverse engineering, defensive analysis.*
-```
-
-**Three things to fix before you push it**
-
-1. **Version mismatch.** Your source says v2.4.0 in the header and release-assets section but v2.3.3 in the metrics table, the roadmap changelog, and every release URL. I normalized everything to v2.4.0 — if the actual release is v2.3.3, change the four occurrences back and add a v2.4.0 changelog row only when it ships.
-2. **Release URLs.** The originals pointed at `releases/download/v2.3.3/...` with specific filenames. I swapped them for `releases/latest`, which won't 404 on a rename — but restore the pinned URLs if you want reproducible links.
-3. **`assets/logo.svg` in the header.** Your original also embedded it again at the bottom of the Tutorials section; I removed the duplicate.
-
-Also worth knowing: the `tests-passing` badge was hardcoded, so it stays green even when CI is red. The `actions/workflow/status` badge next to it reports truth — keep both, but trust the second one.
+*Protocol archaeology, reverse engineering, defe
