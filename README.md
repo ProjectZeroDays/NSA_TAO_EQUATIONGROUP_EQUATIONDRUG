@@ -105,7 +105,7 @@ The file/library blob layout includes fields that have been partially validated 
 | Offset | Field | Status |
 | --- | --- | --- |
 | +16 | library type | candidate |
-| +20 | `0xdcce0000` | open |
+| +20 | `0xdcce0000` | confirmed |
 | +24 | `sendSize` (u32 BE) | confirmed |
 | +28 | `checksum` (u16 LE) | confirmed |
 | +30 | `runType` | candidate |
