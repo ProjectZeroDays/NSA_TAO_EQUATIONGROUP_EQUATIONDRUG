@@ -307,3 +307,6 @@ int pc_handshake(pc_session_t *s, const u8 *pubkey, size_t pubkey_len,
     if (exe_len) *exe_len = total;
     return EQ_OK;
 }
+
+int main(int argc, char **argv) { (void)argc; (void)argv; return 0; }
+
