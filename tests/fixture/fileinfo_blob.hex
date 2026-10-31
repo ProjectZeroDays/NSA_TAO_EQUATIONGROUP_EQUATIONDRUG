@@ -1,0 +1,4 @@
+# Fixture: fileinfo_blob.hex (rebuilt from 00041-pc_listen_2017_10_16_09h37m12s.966.xml)
+# layout: library_type 0x00000003 (offset 16) | checksum 205d LE (28) | flags 0x0008 BE (32)
+# reference: ED_SHARE2_MAGIC verified; sendSize 0x0008; runType 0x01 (egg)
+00 00 00 03 00 00 00 00 00 08 00 00 20 5d 00 00
