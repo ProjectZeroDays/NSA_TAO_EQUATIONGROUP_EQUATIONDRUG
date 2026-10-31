@@ -1,0 +1,2 @@
+# effects
+# Equinox module stub

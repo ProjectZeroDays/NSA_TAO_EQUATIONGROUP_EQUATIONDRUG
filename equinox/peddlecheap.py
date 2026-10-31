@@ -1,0 +1,2 @@
+# peddlecheap
+# Equinox module stub

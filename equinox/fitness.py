@@ -1,0 +1,2 @@
+# fitness
+# Equinox module stub
