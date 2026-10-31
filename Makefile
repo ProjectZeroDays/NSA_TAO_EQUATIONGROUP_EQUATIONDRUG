@@ -3,7 +3,7 @@ MINGW   ?= x86_64-w64-mingw32-gcc
 CFLAGS  ?= -O2 -Wall -Wextra -std=c99 -Iinclude
 WARN    := -Werror=implicit-function-declaration -Wno-unused-function
 
-CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c
+CORE := src/eq_common.c src/rc5.c src/aes.c src/bignum.c src/sha1.c src/pc_proto.c
 DLL  := $(CORE) src/mscfg32.c src/ed_config.c src/ed_plugin_host.c src/registry.c
 EXE  := $(CORE) src/peddlecheap.c
 TESTS := build/rc5_vectors build/aes_vectors build/sha1_kat build/modexp_kat build/pc_selftest build/config_walk build/handshake_kat build/sha1_pad build/registry_kat build/bignum_extra build/peddlecheap_pad build/plugin_load build/bignum_sub_borrow
@@ -13,6 +13,8 @@ build:
 	@mkdir -p build
 build/peddlecheap: $(EXE) | build
 	$(CC) $(CFLAGS) $(WARN) -mconsole -o $@ $(EXE) icon.o -lws2_32
+build/handshake_it: tests/handshake_it.c $(CORE) src/pc_proto.c | build
+	$(CC) $(CFLAGS) $(WARN) -o $@ $^ -lws2_32
 build/mscfg32.dll: $(DLL) def/mscfg32.def | build
 	$(MINGW) $(CFLAGS) $(WARN) -shared -o $@ $(DLL) def/mscfg32.def -lws2_32
 build/rc5_vectors: tests/rc5_vectors.c src/rc5.c src/eq_common.c | build

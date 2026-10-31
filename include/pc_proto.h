@@ -54,4 +54,11 @@ int pc_send(pc_session_t *s, const u8 *payload, u32 len);
 int pc_recv(pc_session_t *s, u8 *out, u32 cap, u32 *out_len);
 int pc_handshake(pc_session_t *s, const u8 *pubkey, size_t pubkey_len,
                  u8 *exe_out, size_t exe_cap, size_t *exe_len);
+#define PC_VER_MAJOR 2
+#define PC_VER_SUB 3
+#define PC_VER_MINOR 0
+#define PC_VER_BUILD 0
+int pc_handshake_begin(pc_session_t *s);
+int pc_handshake_step(pc_session_t *s, const u8 *pubkey, size_t pubkey_len,
+                      u8 *exe_out, size_t exe_cap, size_t *exe_len);
 #endif
